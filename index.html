@@ -27,7 +27,13 @@ html,body{
 /* ── HEADER ── */
 .header{display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
 .brand{display:flex;align-items:center;gap:12px}
-.brand-svg{height:32px;fill:var(--red);filter:drop-shadow(0 0 14px rgba(227,25,55,.85))}
+.brand-wordmark{
+  font-size:23px;font-weight:700;letter-spacing:10px;
+  color:var(--red);text-indent:10px;
+  filter:drop-shadow(0 0 12px rgba(227,25,55,.75));
+  font-family:-apple-system,'Helvetica Neue',Arial,sans-serif;
+  line-height:1;
+}
 .brand-label{display:flex;flex-direction:column;gap:2px}
 .brand-name{font-size:10px;letter-spacing:5px;color:var(--t2);font-weight:300}
 .brand-sub{font-size:9px;letter-spacing:2px;color:#252525}
@@ -297,12 +303,9 @@ html,body{
 
   <div class="header">
     <div class="brand">
-      <svg class="brand-svg" viewBox="-2 -2 104 167">
-        <path d="M 50,0 C 65,1 84,5 100,13 C 88,21 73,24 60,25 L 60,163 L 40,163 L 40,25 C 27,24 12,21 0,13 C 16,5 35,1 50,0 Z"/>
-      </svg>
-      <div class="brand-label">
-        <span class="brand-name">MODEL Y</span>
-        <span class="brand-sub">TESLA DASHBOARD</span>
+      <div>
+        <div class="brand-wordmark">TESLA</div>
+        <span class="brand-name" style="display:block;margin-top:4px">MODEL Y</span>
       </div>
     </div>
     <div class="header-mid">
