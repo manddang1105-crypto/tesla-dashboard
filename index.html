@@ -27,12 +27,11 @@ html,body{
 /* ── HEADER ── */
 .header{display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
 .brand{display:flex;align-items:center;gap:12px}
+.brand-svg{height:28px;fill:var(--red);filter:drop-shadow(0 0 14px rgba(227,25,55,.85))}
 .brand-wordmark{
-  font-size:23px;font-weight:700;letter-spacing:10px;
-  color:var(--red);text-indent:10px;
-  filter:drop-shadow(0 0 12px rgba(227,25,55,.75));
+  font-size:18px;font-weight:700;letter-spacing:8px;text-indent:8px;
+  color:var(--red);line-height:1;
   font-family:-apple-system,'Helvetica Neue',Arial,sans-serif;
-  line-height:1;
 }
 .brand-label{display:flex;flex-direction:column;gap:2px}
 .brand-name{font-size:10px;letter-spacing:5px;color:var(--t2);font-weight:300}
@@ -167,7 +166,7 @@ html,body{
 .car-bg{
   position:fixed;bottom:0;right:0;
   width:82%;max-width:720px;height:auto;
-  opacity:0.12;pointer-events:none;z-index:0;
+  opacity:0.18;pointer-events:none;z-index:0;
 }
 
 /* ── GPS 권한 오버레이 ── */
@@ -189,43 +188,39 @@ html,body{
 <body>
 
 <!-- Model Y 배경 실루엣 -->
-<svg class="car-bg" viewBox="0 0 700 300" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+<svg class="car-bg" viewBox="0 0 670 295" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
   <g fill="none" stroke="white" stroke-linejoin="round" stroke-linecap="round">
-    <!-- 차체 외곽 (후드 → 지붕 → 트렁크) -->
-    <path stroke-width="1.5" d="
-      M 25,230 L 25,195
-      C 28,180 46,168 70,158
-      L 140,132
-      C 162,118 196,108 232,100
-      L 252,65
-      C 260,53 280,46 306,44
-      L 492,44
-      C 518,44 540,52 556,66
-      L 608,132
-      C 628,152 640,177 640,202
-      L 640,230
+    <!-- 차체 외곽 + 휠 아치 (닫힌 경로) -->
+    <!-- sweep-flag=0 : CCW → 왼쪽 이동 시 위로 호 (휠 아치) -->
+    <path stroke-width="2" d="
+      M 28,228 L 28,194
+      C 30,176 52,158 80,148
+      L 150,120
+      C 174,105 210,95 248,87
+      L 268,50
+      C 277,38 297,31 322,29
+      L 490,29
+      C 518,29 542,38 558,53
+      L 614,124
+      C 635,148 645,178 645,202
+      L 645,228 L 607,228
+      A 63,63 0 0 0 481,228
+      L 179,228
+      A 63,63 0 0 0 53,228
+      L 28,228 Z
     "/>
-    <!-- 하단 범퍼 & 사이드실 -->
-    <line stroke-width="1.5" x1="25" y1="230" x2="60" y2="230"/>
-    <line stroke-width="1.5" x1="180" y1="230" x2="485" y2="230"/>
-    <line stroke-width="1.5" x1="605" y1="230" x2="640" y2="230"/>
-    <!-- 앞 휠 아치 (위 반원) -->
-    <path stroke-width="1.5" d="M 60,230 A 60,60 0 0 1 180,230"/>
-    <!-- 앞 휠 아치 (아래 반원) -->
-    <path stroke-width="1.2" stroke-opacity="0.7" d="M 60,230 A 60,60 0 0 0 180,230"/>
-    <!-- 뒤 휠 아치 (위 반원) -->
-    <path stroke-width="1.5" d="M 485,230 A 60,60 0 0 1 605,230"/>
-    <!-- 뒤 휠 아치 (아래 반원) -->
-    <path stroke-width="1.2" stroke-opacity="0.7" d="M 485,230 A 60,60 0 0 0 605,230"/>
+    <!-- 바퀴 아랫 반원 (sweep-flag=1 : 오른쪽 이동 → 아래로 호) -->
+    <path stroke-width="2" d="M 53,228 A 63,63 0 0 1 179,228"/>
+    <path stroke-width="2" d="M 481,228 A 63,63 0 0 1 607,228"/>
     <!-- 휠 허브 -->
-    <circle cx="120" cy="230" r="30" stroke-width="1" stroke-opacity="0.55"/>
-    <circle cx="545" cy="230" r="30" stroke-width="1" stroke-opacity="0.55"/>
-    <!-- B필러 (도어 구분선) -->
-    <line stroke-width="1" stroke-opacity="0.4" x1="385" y1="118" x2="385" y2="230"/>
-    <!-- 윈드실드 -->
-    <path stroke-width="1" stroke-opacity="0.45" d="M 252,65 L 232,100 L 375,100 L 385,65 Z"/>
-    <!-- 리어 글래스 -->
-    <path stroke-width="1" stroke-opacity="0.45" d="M 390,65 L 390,100 L 492,100 L 492,44"/>
+    <circle cx="116" cy="228" r="36" stroke-width="1.4" stroke-opacity="0.65"/>
+    <circle cx="544" cy="228" r="36" stroke-width="1.4" stroke-opacity="0.65"/>
+    <!-- B필러 -->
+    <line stroke-width="1.2" stroke-opacity="0.5" x1="390" y1="110" x2="390" y2="228"/>
+    <!-- 앞 유리 -->
+    <path stroke-width="1.2" stroke-opacity="0.55" d="M 270,50 L 249,86 L 382,86 L 390,50 Z"/>
+    <!-- 뒤 유리 -->
+    <path stroke-width="1.2" stroke-opacity="0.55" d="M 395,50 L 395,86 L 490,86 L 490,29"/>
   </g>
 </svg>
 
@@ -303,6 +298,9 @@ html,body{
 
   <div class="header">
     <div class="brand">
+      <svg class="brand-svg" viewBox="0 0 100 170">
+        <path d="M 0,19 C 33,6 67,6 100,19 C 84,30 69,33 59,33 L 59,170 L 41,170 L 41,33 C 31,33 16,30 0,19 Z"/>
+      </svg>
       <div>
         <div class="brand-wordmark">TESLA</div>
         <span class="brand-name" style="display:block;margin-top:4px">MODEL Y</span>
