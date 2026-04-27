@@ -209,13 +209,20 @@ html,body{
 .sp-err.show{display:block}
 .sp-note{font-size:10px;color:var(--t2);line-height:1.6;margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
 
-/* ── Model Y 배경 ── */
-.car-bg{
-  position:fixed;bottom:-3%;right:-4%;
-  width:88%;max-width:820px;height:auto;
-  opacity:0.22;pointer-events:none;z-index:0;
-  filter:blur(0.8px);
+/* ── Model Y 사진 배경 ── */
+.car-wrap{
+  position:fixed;right:-6%;bottom:0;
+  width:66%;max-width:720px;height:78vh;
+  overflow:hidden;pointer-events:none;z-index:0;
+  opacity:0.22;filter:blur(0.4px);
+  -webkit-mask-image:linear-gradient(to bottom,
+    transparent 0%,rgba(0,0,0,.7) 8%,#000 22%,
+    #000 68%,rgba(0,0,0,.6) 84%,transparent 100%);
+  mask-image:linear-gradient(to bottom,
+    transparent 0%,rgba(0,0,0,.7) 8%,#000 22%,
+    #000 68%,rgba(0,0,0,.6) 84%,transparent 100%);
 }
+.car-img{width:100%;height:auto;display:block;transform:translateY(-12%)}
 .brand-svg{height:28px;fill:var(--red);filter:drop-shadow(0 0 14px rgba(227,25,55,.85))}
 
 /* ── GPS 권한 오버레이 ── */
@@ -236,8 +243,13 @@ html,body{
 </head>
 <body>
 
-<!-- Model Y 3D 배경 -->
-<svg class="car-bg" viewBox="0 0 780 368" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+<!-- Model Y 사진 배경 -->
+<div class="car-wrap" aria-hidden="true">
+  <img class="car-img" src="car.jpg" alt="">
+</div>
+
+<!-- (fallback SVG — hidden if image loads) -->
+<svg style="display:none" viewBox="0 0 780 368" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
   <defs>
     <radialGradient id="bodyG" cx="42%" cy="38%" r="58%">
       <stop offset="0%" stop-color="#606068"/>
