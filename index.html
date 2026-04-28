@@ -51,18 +51,18 @@ html,body{
 .wave{
   position:absolute;
   border-radius:50%;
-  border:1px solid rgba(0,220,255,0.18);
+  border:1px solid rgba(0,220,255,0.12);
   width:80px;height:50px;
-  animation:waveOut 5s ease-out infinite;
+  animation:waveOut 12s ease-out infinite;
 }
 .wave:nth-child(1){animation-delay:0s}
-.wave:nth-child(2){animation-delay:1s}
-.wave:nth-child(3){animation-delay:2s}
-.wave:nth-child(4){animation-delay:3s}
-.wave:nth-child(5){animation-delay:4s}
+.wave:nth-child(2){animation-delay:2.4s}
+.wave:nth-child(3){animation-delay:4.8s}
+.wave:nth-child(4){animation-delay:7.2s}
+.wave:nth-child(5){animation-delay:9.6s}
 @keyframes waveOut{
-  0%  {transform:scale(1);   opacity:.55}
-  60% {opacity:.15}
+  0%  {transform:scale(1);   opacity:.4}
+  60% {opacity:.08}
   100%{transform:scale(22);  opacity:0}
 }
 
