@@ -152,7 +152,7 @@ html,body{
 .r-section{
   flex:1 1 0;
   display:flex;flex-direction:column;
-  justify-content:center;
+  justify-content:center;align-items:center;text-align:center;
   min-height:0;overflow:hidden;
 }
 .r-divider{height:1px;background:rgba(255,255,255,0.07);flex-shrink:0}
@@ -164,18 +164,19 @@ html,body{
 }
 
 /* 날씨 */
-.wx-temp{font-size:clamp(48px,11vh,88px);font-weight:100;line-height:1;color:var(--t0);font-family:Impact,sans-serif}
-.wx-desc{font-size:clamp(13px,2.2vh,18px);color:var(--t1);margin-top:6px;font-family:Impact,sans-serif;letter-spacing:1px}
-.wx-detail{display:flex;gap:8px;margin-top:10px}
-.wx-d{flex:1}
-.wx-d-lbl{font-size:10px;letter-spacing:2px;color:var(--t2)}
-.wx-d-val{font-size:15px;font-weight:300;color:var(--t1);margin-top:4px;font-family:Impact,sans-serif}
+.wx-row{display:flex;align-items:center;gap:16px}
+.wx-temp{font-size:clamp(48px,11vh,88px);font-weight:100;line-height:1;color:var(--t0);font-family:Impact,sans-serif;flex-shrink:0}
+.wx-desc{font-size:clamp(13px,2vh,17px);color:var(--t1);margin-top:4px;font-family:Impact,sans-serif;letter-spacing:1px}
+.wx-side{display:flex;flex-direction:column;justify-content:center;gap:6px}
+.wx-d{display:flex;flex-direction:column}
+.wx-d-lbl{font-size:9px;letter-spacing:2px;color:var(--t2);font-family:Impact,sans-serif}
+.wx-d-val{font-size:14px;font-weight:300;color:var(--t1);font-family:Impact,sans-serif}
 
 /* 배터리 */
 .batt-row{display:flex;align-items:baseline;gap:8px}
 .batt-num{font-size:clamp(48px,11vh,88px);font-weight:100;line-height:1;color:var(--t0);font-family:Impact,sans-serif}
 .batt-unit{font-size:13px;color:var(--t2);letter-spacing:2px}
-.batt-bar-wrap{height:5px;background:rgba(255,255,255,0.1);border-radius:3px;overflow:hidden;margin:10px 0 6px}
+.batt-bar-wrap{height:5px;background:rgba(255,255,255,0.1);border-radius:3px;overflow:hidden;margin:10px 0 6px;width:100%}
 .batt-fill{height:100%;border-radius:3px;transition:width .6s,background .4s}
 .batt-sub{font-size:13px;color:var(--t1);font-family:Impact,sans-serif}
 
@@ -314,6 +315,7 @@ html,body{
     <div class="card card-left">
 
       <div class="spd-section">
+        <div class="sec-lbl">SPEED</div>
         <div class="spd-num" id="js-spd">0</div>
         <div class="spd-unit">KM / H</div>
         <div class="spd-row">
@@ -326,6 +328,7 @@ html,body{
       <div class="divider"></div>
 
       <div class="clock-section">
+        <div class="sec-lbl">TIME</div>
         <div class="clock-time" id="js-clk">--:--</div>
         <div class="clock-date" id="js-dt">----.--.-- (--)</div>
       </div>
@@ -343,12 +346,16 @@ html,body{
       <!-- 날씨 섹션 -->
       <div class="r-section">
         <div class="sec-lbl">WEATHER</div>
-        <div class="wx-temp" id="js-tmp">--°</div>
-        <div class="wx-desc" id="js-dsc">--</div>
-        <div class="wx-detail">
-          <div class="wx-d"><div class="wx-d-lbl">체감</div><div class="wx-d-val" id="js-feel">--°</div></div>
-          <div class="wx-d"><div class="wx-d-lbl">습도</div><div class="wx-d-val" id="js-hum">--%</div></div>
-          <div class="wx-d"><div class="wx-d-lbl">바람</div><div class="wx-d-val" id="js-wnd">--</div></div>
+        <div class="wx-row">
+          <div>
+            <div class="wx-temp" id="js-tmp">--°</div>
+            <div class="wx-desc" id="js-dsc">--</div>
+          </div>
+          <div class="wx-side">
+            <div class="wx-d"><div class="wx-d-lbl">FEELS LIKE</div><div class="wx-d-val" id="js-feel">--°</div></div>
+            <div class="wx-d"><div class="wx-d-lbl">HUMIDITY</div><div class="wx-d-val" id="js-hum">--%</div></div>
+            <div class="wx-d"><div class="wx-d-lbl">WIND</div><div class="wx-d-val" id="js-wnd">--</div></div>
+          </div>
         </div>
       </div>
 
