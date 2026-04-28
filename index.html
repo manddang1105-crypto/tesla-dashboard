@@ -700,13 +700,59 @@ async function fetchVehicles(){
   const v=data.response[0];TS.vid=v.id_s;TS.name=v.display_name||'Model Y';
   lsSet('t_vid',TS.vid);lsSet('t_name',TS.name);
 }
+/* 주행 중 10초 / 정차 30초 동적 폴링 */
+let pollInterval=30000;
+function adjustPoll(isDriving){
+  const target=isDriving?10000:30000;
+  if(pollInterval===target)return;
+  pollInterval=target;
+  if(teslaTimer){clearInterval(teslaTimer);teslaTimer=setInterval(fetchVehicleData,pollInterval);}
+}
+
+async function wakeVehicle(){
+  try{
+    const token=await getToken();
+    await fetch(PROXY+TAPI+`/api/1/vehicles/${TS.vid}/wake_up`,{method:'POST',headers:{Authorization:'Bearer '+token}});
+  }catch{}
+}
+
 async function fetchVehicleData(){
   if(!TS.vid)return;
   try{
     const token=await getToken();
-    const res=await fetch(PROXY+TAPI+`/api/1/vehicles/${TS.vid}/vehicle_data`,{headers:{Authorization:'Bearer '+token}});
-    const data=await res.json();updateTeslaCards(data.response);
-  }catch(e){console.warn('Tesla 데이터 오류:',e.message);}
+    /* endpoints 파라미터 필수: 누락 시 drive_state 등 일부 필드 안 옴 */
+    const ep=encodeURIComponent('drive_state;charge_state;climate_state;vehicle_state');
+    const res=await fetch(PROXY+TAPI+`/api/1/vehicles/${TS.vid}/vehicle_data?endpoints=${ep}`,
+      {headers:{Authorization:'Bearer '+token}});
+
+    if(!res.ok){
+      /* 408/503 = 차량 잠자는 중 → wake_up 시도 */
+      if(res.status===408||res.status===503){
+        dot('hdr-dot','warn');set('hdr-tesla-txt',(TS.name||'Tesla')+' 절전중');
+        wakeVehicle();
+      } else {
+        dot('hdr-dot','err');set('hdr-tesla-txt','API 오류 '+res.status);
+      }
+      return;
+    }
+
+    const data=await res.json();
+    if(!data.response){
+      dot('hdr-dot','warn');set('hdr-tesla-txt',(TS.name||'Tesla')+' 응답없음');
+      return;
+    }
+
+    dot('hdr-dot','ok');set('hdr-tesla-txt',TS.name||'연결됨');
+    updateTeslaCards(data.response);
+
+    /* 주행 여부에 따라 폴링 주기 조정 */
+    const spd=data.response?.drive_state?.speed??0;
+    adjustPoll(spd>0);
+
+  }catch(e){
+    console.warn('Tesla 데이터 오류:',e.message);
+    dot('hdr-dot','warn');set('hdr-tesla-txt','연결 재시도중');
+  }
 }
 function updateTeslaCards(v){
   if(!v)return;
@@ -754,9 +800,10 @@ function onConnected(){
   set('sp-car-name',TS.name||'Model Y');
   $('sp-connected').style.display='block';$('sp-disconnected').style.display='none';
   dot('sp-dot','ok');set('sp-status-txt','연결됨 — '+TS.name);
+  pollInterval=30000;
   fetchVehicleData();
   if(teslaTimer)clearInterval(teslaTimer);
-  teslaTimer=setInterval(fetchVehicleData,30000);
+  teslaTimer=setInterval(fetchVehicleData,pollInterval);
 }
 function disconnect(){
   isTeslaConnected=false;
