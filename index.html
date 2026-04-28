@@ -102,6 +102,7 @@ html,body{
   font-weight:200;
   letter-spacing:-6px;
   line-height:0.88;
+  font-family:Impact,sans-serif;
   color:var(--t0);
   font-variant-numeric:tabular-nums;
 }
@@ -129,6 +130,7 @@ html,body{
 .clock-time{
   font-size:clamp(48px,11vh,88px);
   font-weight:100;letter-spacing:3px;line-height:1;color:var(--t0);
+  font-family:Impact,sans-serif;
 }
 .clock-date{font-size:13px;color:var(--t2);letter-spacing:2px;margin-top:8px}
 
@@ -161,18 +163,16 @@ html,body{
 }
 
 /* 날씨 */
-.wx-main{display:flex;align-items:center;gap:14px;margin-bottom:8px}
-.wx-ico{font-size:clamp(34px,6.5vh,52px);line-height:1}
-.wx-temp{font-size:clamp(40px,9vh,68px);font-weight:200;line-height:1}
-.wx-desc{font-size:13px;color:var(--t1);margin-top:4px}
-.wx-detail{display:flex;gap:8px}
+.wx-temp{font-size:clamp(48px,11vh,88px);font-weight:100;line-height:1;color:var(--t0);font-family:Impact,sans-serif}
+.wx-desc{font-size:clamp(13px,2.2vh,18px);color:var(--t1);margin-top:6px;font-family:Impact,sans-serif;letter-spacing:1px}
+.wx-detail{display:flex;gap:8px;margin-top:10px}
 .wx-d{flex:1}
 .wx-d-lbl{font-size:10px;letter-spacing:2px;color:var(--t2)}
-.wx-d-val{font-size:15px;font-weight:300;color:var(--t1);margin-top:4px}
+.wx-d-val{font-size:15px;font-weight:300;color:var(--t1);margin-top:4px;font-family:Impact,sans-serif}
 
 /* 배터리 */
 .batt-row{display:flex;align-items:baseline;gap:8px}
-.batt-num{font-size:clamp(48px,11vh,88px);font-weight:100;line-height:1;color:var(--t0)}
+.batt-num{font-size:clamp(48px,11vh,88px);font-weight:100;line-height:1;color:var(--t0);font-family:Impact,sans-serif}
 .batt-unit{font-size:13px;color:var(--t2);letter-spacing:2px}
 .batt-bar-wrap{height:5px;background:rgba(255,255,255,0.1);border-radius:3px;overflow:hidden;margin:10px 0 6px}
 .batt-fill{height:100%;border-radius:3px;transition:width .6s,background .4s}
@@ -342,13 +342,8 @@ html,body{
       <!-- 날씨 섹션 -->
       <div class="r-section">
         <div class="sec-lbl">날씨</div>
-        <div class="wx-main">
-          <div class="wx-ico" id="js-wi">—</div>
-          <div>
-            <div class="wx-temp" id="js-tmp">--°</div>
-            <div class="wx-desc" id="js-dsc">위치 확인중</div>
-          </div>
-        </div>
+        <div class="wx-temp" id="js-tmp">--°</div>
+        <div class="wx-desc" id="js-dsc">--</div>
         <div class="wx-detail">
           <div class="wx-d"><div class="wx-d-lbl">체감</div><div class="wx-d-val" id="js-feel">--°</div></div>
           <div class="wx-d"><div class="wx-d-lbl">습도</div><div class="wx-d-val" id="js-hum">--%</div></div>
@@ -466,8 +461,8 @@ function haversine(φ1,λ1,φ2,λ2){
 startGPS();
 
 /* 날씨 */
-const WI={0:'☀️',1:'🌤️',2:'⛅',3:'☁️',45:'🌫️',48:'🌫️',51:'🌦️',53:'🌦️',55:'🌧️',61:'🌧️',63:'🌧️',65:'🌨️',71:'❄️',73:'❄️',75:'❄️',80:'🌦️',81:'🌦️',82:'⛈️',95:'⛈️',99:'⛈️'};
-const WD={0:'맑음',1:'대체로 맑음',2:'구름 조금',3:'흐림',45:'안개',48:'안개',51:'이슬비',53:'이슬비',55:'이슬비',61:'비',63:'비',65:'강한 비',71:'눈',73:'눈',75:'강한 눈',80:'소나기',81:'소나기',82:'강한 소나기',95:'뇌우',99:'뇌우'};
+const WI={};
+const WD={0:'Clear',1:'Mostly Clear',2:'Partly Cloudy',3:'Overcast',45:'Fog',48:'Fog',51:'Drizzle',53:'Drizzle',55:'Drizzle',61:'Rain',63:'Rain',65:'Heavy Rain',71:'Snow',73:'Snow',75:'Heavy Snow',80:'Showers',81:'Showers',82:'Heavy Showers',95:'Thunderstorm',99:'Thunderstorm'};
 async function fetchWeather(la,lo){
   try{
     const r=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${la}&longitude=${lo}&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m&wind_speed_unit=ms&timezone=auto`);
