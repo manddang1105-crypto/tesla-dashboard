@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Tesla Model Y · Dashboard</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --red:#E31937;--green:#2ECC71;--amber:#E67E22;--cyan:#00DCFF;
+  --glass:rgba(0,0,0,0.58);--gb:rgba(255,255,255,0.08);
+  --t0:#ffffff;--t1:rgba(255,255,255,0.65);--t2:rgba(255,255,255,0.32);
+}
+html,body{
+  width:100vw;height:100vh;overflow:hidden;background:#000;
+  font-family:-apple-system,'Helvetica Neue',Arial,sans-serif;
+  -webkit-font-smoothing:antialiased;
+  user-select:none;-webkit-user-select:none;
+}
+
+/* ── 배경 ── */
+.bg{
+  position:fixed;inset:0;z-index:0;
+  background:url('bg.jpg') center center/cover no-repeat;
+  filter:brightness(0.65);
+}
+.bg::after{
+  content:'';position:absolute;inset:0;
+  background:
+    linear-gradient(90deg,
+      rgba(0,0,0,0.78) 0%,
+      rgba(0,0,0,0.2) 28%,
+      rgba(0,0,0,0.0) 50%,
+      rgba(0,0,0,0.2) 72%,
+      rgba(0,0,0,0.78) 100%),
+    linear-gradient(180deg,
+      rgba(0,0,0,0.5) 0%,
+      transparent 20%,
+      transparent 75%,
+      rgba(0,0,0,0.6) 100%);
+}
+
+/* ── 웨이브 파동 ── */
+.wave-bg{
+  position:fixed;inset:0;z-index:0;
+  display:flex;align-items:center;justify-content:center;
+  pointer-events:none;
+}
+.wave{
+  position:absolute;
+  border-radius:50%;
+  border:1px solid var(--wave-color, rgba(0,220,255,0.12));
+  width:80px;height:50px;
+  animation:waveOut var(--wave-dur, 12s) ease-out infinite;
+}
+.wave:nth-child(1){animation-delay:0s}
+.wave:nth-child(2){animation-delay:calc(var(--wave-dur,12s) / 5)}
+.wave:nth-child(3){animation-delay:calc(var(--wave-dur,12s) / 5 * 2)}
+.wave:nth-child(4){animation-delay:calc(var(--wave-dur,12s) / 5 * 3)}
+.wave:nth-child(5){animation-delay:calc(var(--wave-dur,12s) / 5 * 4)}
+@keyframes waveOut{
+  0%  {transform:scale(1);   opacity:var(--wave-opacity,.4)}
+  60% {opacity:.06}
+  100%{transform:scale(22);  opacity:0}
+}
+
+/* ── 루트 ── */
+.root{
+  position:relative;z-index:1;
+  display:flex;flex-direction:column;
+  height:100vh;
+  padding:clamp(4px,1.2vh,10px) clamp(8px,1.5vw,18px) clamp(4px,1vh,8px);
+  gap:clamp(4px,1vh,8px);
+}
+
+/* ── 상단 바 ── */
+.topbar{
+  display:flex;align-items:center;justify-content:space-between;
+  flex-shrink:0;
+}
+.brand-w{font-size:15px;font-weight:700;letter-spacing:8px;text-indent:8px;color:var(--red);line-height:1}
+.brand-m{font-size:9px;letter-spacing:5px;color:var(--t2);font-weight:300;margin-top:4px}
+.conn{
+  display:flex;align-items:center;gap:7px;
+  font-size:clamp(9px,1.4vh,12px);color:var(--t2);
+  cursor:pointer;padding:4px 10px;border-radius:20px;
+  border:1px solid rgba(255,255,255,0.08);
+  transition:background .2s;
+}
+.conn:active{background:rgba(255,255,255,0.05)}
+
+/* ── 메인 3분할 ── */
+.main{display:flex;gap:16px;flex:1;min-height:0;align-items:stretch}
+
+/* ── 글라스 카드 ── */
+.card{
+  background:var(--glass);
+  border:1px solid var(--gb);
+  border-radius:18px;
+  backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
+  padding:clamp(8px,2vh,16px) clamp(10px,1.8vw,20px);
+  display:flex;flex-direction:column;
+  position:relative;overflow:hidden;
+}
+.card::before{
+  content:'';position:absolute;top:0;left:12%;right:12%;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,0.12),transparent);
+}
+
+/* ── 왼쪽: 속도 + 시계 — 각 섹션이 절반씩 차지, 중앙 정렬 ── */
+.card-left{
+  width:35%;
+  justify-content:space-between;
+}
+/* 속도 섹션: 카드 절반 높이, 중앙 정렬 */
+.spd-section{
+  flex:1;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  text-align:center;
+}
+.spd-num{
+  font-size:clamp(48px,11vh,88px);
+  font-weight:100;
+  letter-spacing:-2px;
+  line-height:1;
+  font-family:Impact,sans-serif;
+  color:var(--t0);
+  font-variant-numeric:tabular-nums;
+}
+.spd-unit{font-family:Impact,sans-serif;
+  font-size:clamp(8px,1.4vh,12px);letter-spacing:4px;
+  color:var(--t2);margin-top:clamp(4px,1vh,8px);
+}
+.spd-row{
+  display:flex;align-items:center;justify-content:center;gap:clamp(8px,1.5vw,16px);
+  margin-top:clamp(6px,1.2vh,10px);
+}
+.spd-gear{font-size:clamp(11px,2vh,16px);font-weight:300;color:var(--red);font-family:Impact,sans-serif}
+.spd-st{font-size:clamp(11px,2vh,16px);color:var(--t1);font-family:Impact,sans-serif}
+.spd-kw{font-size:clamp(11px,2vh,16px);font-weight:300;color:var(--green);font-family:Impact,sans-serif}
+
+.divider{height:1px;background:rgba(255,255,255,0.08);flex-shrink:0}
+
+/* 속도 게이지 바 */
+.spd-gauge-wrap{width:100%;height:4px;background:rgba(255,255,255,0.1);border-radius:2px;overflow:hidden;margin:clamp(6px,1.2vh,10px) 0 clamp(2px,.6vh,4px)}
+.spd-gauge-fill{height:100%;border-radius:2px;background:#fff;width:0%;transition:width .4s ease,background .4s}
+
+/* 시계 섹션: 카드 절반 높이, 중앙 정렬 */
+.clock-section{
+  flex:1;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  text-align:center;
+}
+.clock-time{
+  font-size:clamp(48px,11vh,88px);
+  font-weight:100;letter-spacing:3px;line-height:1;color:var(--t0);
+  font-family:Impact,sans-serif;
+}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+.clk-colon{animation:blink 1s step-start infinite}
+.clock-date{font-size:clamp(9px,1.6vh,13px);color:var(--t2);letter-spacing:2px;margin-top:clamp(4px,1vh,8px);font-family:Impact,sans-serif}
+
+/* ── 중앙 투명: 카드 너비 동일(35%씩)하면 void 가 정확히 중앙 ── */
+.void{flex:1;pointer-events:none;position:relative}
+.tesla-logo-wrap{
+  position:absolute;bottom:18px;left:50%;transform:translateX(-50%);
+  width:clamp(54px,7vw,90px);pointer-events:none;
+  display:flex;flex-direction:column;align-items:center;
+}
+.tesla-logo-img{
+  width:100%;display:block;
+  opacity:0.85;
+}
+.copy-txt{
+  text-align:center;
+  margin-top:7px;
+  font-size:9px;
+  letter-spacing:3px;
+  color:rgba(255,255,255,0.25);
+  font-family:Impact,sans-serif;
+  white-space:nowrap;
+}
+
+/* ── 오른쪽: 날씨 + 배터리 + 위치 — 3섹션이 균등하게 카드를 꽉 채움 ── */
+.card-right{width:35%;justify-content:space-between}
+
+/* flex:1 1 0 + min-height:0 + overflow:hidden → 창 줄여도 서로 간섭 없음 */
+.r-section{
+  flex:1 1 0;
+  display:flex;flex-direction:column;
+  justify-content:center;align-items:center;text-align:center;
+  min-height:0;overflow:hidden;
+}
+.r-divider{height:1px;background:rgba(255,255,255,0.07);flex-shrink:0}
+
+.sec-lbl{
+  font-size:clamp(7px,1.3vh,10px);letter-spacing:3px;color:var(--t2);
+  text-transform:uppercase;margin-bottom:clamp(4px,1vh,8px);
+  font-family:Impact,sans-serif;
+}
+
+/* 날씨 */
+.wx-temp{font-size:clamp(48px,11vh,88px);font-weight:100;line-height:1;color:var(--t0);font-family:Impact,sans-serif}
+.wx-desc{font-size:clamp(10px,1.8vh,17px);color:var(--t1);margin-top:clamp(2px,.6vh,4px);font-family:Impact,sans-serif;letter-spacing:1px}
+.wx-detail{display:flex;gap:clamp(4px,1vw,8px);margin-top:clamp(6px,1.2vh,10px);width:100%;justify-content:center}
+.wx-d{display:flex;flex-direction:column;align-items:center}
+.wx-d-lbl{font-size:clamp(7px,1.1vh,9px);letter-spacing:2px;color:var(--t2);font-family:Impact,sans-serif}
+.wx-d-val{font-size:clamp(10px,1.8vh,14px);font-weight:300;color:var(--t1);font-family:Impact,sans-serif}
+
+/* 배터리 */
+.batt-row{display:flex;align-items:baseline;gap:8px}
+.batt-num{font-size:clamp(48px,11vh,88px);font-weight:100;line-height:1;color:var(--t0);font-family:Impact,sans-serif}
+.batt-unit{font-size:clamp(9px,1.6vh,13px);color:var(--t2);letter-spacing:2px}
+.batt-bar-wrap{height:4px;background:rgba(255,255,255,0.1);border-radius:3px;overflow:hidden;margin:clamp(6px,1.2vh,10px) 0 clamp(4px,1vh,6px);width:100%}
+.batt-fill{height:100%;border-radius:3px;transition:width .6s,background .4s}
+.batt-sub{font-size:clamp(9px,1.6vh,13px);color:var(--t1);font-family:Impact,sans-serif}
+
+/* 위치 */
+.loc-val{font-size:14px;font-weight:300;color:var(--t1);font-family:'SF Mono',monospace;margin-top:5px}
+.loc-acc{font-size:12px;color:var(--t2);margin-top:4px}
+
+/* Tesla 차량 정보 */
+.info-row{display:flex;justify-content:space-between;margin-top:6px;gap:8px}
+.info-item{display:flex;flex-direction:column;gap:3px;flex:1}
+.info-lbl{font-size:10px;letter-spacing:2px;color:var(--t2)}
+.info-val{font-size:clamp(16px,3.5vh,22px);font-weight:300;color:var(--t0)}
+
+/* ── 하단 상태 바 ── */
+.strip{
+  display:flex;justify-content:space-between;align-items:center;
+  flex-shrink:0;padding-top:6px;
+  border-top:1px solid rgba(255,255,255,0.07);
+}
+.sitem{display:flex;align-items:center;gap:5px;font-size:clamp(8px,1.3vh,11px);color:var(--t2)}
+.sdot{width:6px;height:6px;border-radius:50%;background:var(--t2);transition:background .3s,box-shadow .3s}
+.sdot.ok{background:var(--green);box-shadow:0 0 6px var(--green)}
+.sdot.err{background:var(--red);box-shadow:0 0 6px var(--red)}
+.sdot.warn{background:var(--amber);box-shadow:0 0 6px var(--amber)}
+
+/* ── 풀스크린 ── */
+.fs-btn{
+  cursor:pointer;font-size:clamp(12px,1.6vh,16px);color:var(--t2);
+  display:flex;align-items:center;
+}
+.fs-btn:active{color:var(--red)}
+
+/* ── 설정 패널 ── */
+.settings-overlay{position:fixed;inset:0;z-index:800;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);display:none}
+.settings-overlay.show{display:block}
+.settings-panel{
+  position:absolute;right:0;top:0;bottom:0;width:320px;
+  background:#070707;border-left:1px solid rgba(255,255,255,0.08);
+  display:flex;flex-direction:column;animation:slideIn .22s ease;
+}
+@keyframes slideIn{from{transform:translateX(100%)}to{transform:translateX(0)}}
+.sp-head{display:flex;align-items:center;justify-content:space-between;padding:18px 20px;border-bottom:1px solid rgba(255,255,255,0.07)}
+.sp-title{font-size:12px;letter-spacing:2px;color:var(--t2)}
+.sp-close{width:28px;height:28px;border-radius:50%;background:#141414;border:none;color:var(--t2);font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.sp-close:active{color:var(--red)}
+.sp-body{flex:1;overflow-y:auto;padding:20px}
+.sp-section{margin-bottom:22px}
+.sp-lbl{font-size:9px;letter-spacing:2px;color:var(--t2);margin-bottom:10px}
+.sp-status{display:flex;align-items:center;gap:8px;padding:12px 14px;border-radius:10px;background:#111;margin-bottom:16px;font-size:13px}
+.sp-btn{width:100%;padding:12px;border-radius:10px;border:1px solid #1e1e1e;background:#111;color:#fff;font-size:13px;cursor:pointer;text-align:center;margin-bottom:8px;transition:background .15s}
+.sp-btn:active{background:#1a1a1a}
+.sp-btn-red{background:var(--red);border-color:var(--red)}
+.sp-btn-red:active{background:#c41530}
+.sp-input{width:100%;padding:10px 13px;border-radius:10px;border:1px solid #1e1e1e;background:#111;color:#fff;font-size:12px;margin-bottom:8px;outline:none;font-family:monospace}
+.sp-input:focus{border-color:var(--red)}
+.sp-err{font-size:11px;color:var(--red);margin-top:6px;display:none}
+.sp-err.show{display:block}
+.sp-note{font-size:10px;color:var(--t2);line-height:1.7;margin-top:12px;padding-top:12px;border-top:1px solid #181818}
+
+/* ── GPS 오버레이 ── */
+.gps-ov{position:fixed;inset:0;z-index:700;background:rgba(0,0,0,.97);display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px}
+.gps-ov.show{display:flex}
+.gps-ov-title{font-size:15px;font-weight:300;letter-spacing:2px}
+.gps-ov-sub{font-size:12px;color:var(--t1);text-align:center;line-height:2;max-width:260px}
+.gps-ov-btn{background:var(--red);border:none;color:#fff;padding:11px 28px;border-radius:24px;font-size:13px;letter-spacing:1px;cursor:pointer;margin-top:4px}
+</style>
+</head>
+<body>
+
+<div class="bg"></div>
+<div class="wave-bg">
+  <div class="wave"></div>
+  <div class="wave"></div>
+  <div class="wave"></div>
+  <div class="wave"></div>
+  <div class="wave"></div>
+</div>
+
+<div class="gps-ov" id="js-gps-ov">
+  <svg style="height:30px;fill:#E31937" viewBox="-2 -2 104 167">
+    <path d="M 50,0 C 65,1 84,5 100,13 C 88,21 73,24 60,25 L 60,163 L 40,163 L 40,25 C 27,24 12,21 0,13 C 16,5 35,1 50,0 Z"/>
+  </svg>
+  <div class="gps-ov-title">위치 권한 필요</div>
+  <div class="gps-ov-sub">브라우저 위치 권한을 허용해 주세요.<br>주소창 자물쇠 → 위치 → 허용</div>
+  <button class="gps-ov-btn" onclick="$('js-gps-ov').classList.remove('show')">닫기</button>
+</div>
+
+<div class="settings-overlay" id="js-settings-ov" onclick="closeSP(event)">
+  <div class="settings-panel">
+    <div class="sp-head">
+      <div class="sp-title">TESLA 연결</div>
+      <button class="sp-close" onclick="toggleSettings()">✕</button>
+    </div>
+    <div class="sp-body">
+      <div class="sp-status" id="sp-status">
+        <div class="sdot" id="sp-dot"></div>
+        <span id="sp-status-txt">연결 안됨</span>
+      </div>
+      <div id="sp-connected" style="display:none">
+        <div class="sp-lbl">연결된 차량</div>
+        <div style="font-size:20px;font-weight:200;margin-bottom:16px" id="sp-car-name">—</div>
+        <button class="sp-btn" onclick="disconnect()" style="color:var(--red);border-color:var(--red)">연결 해제</button>
+      </div>
+      <div id="sp-disconnected">
+        <div class="sp-section">
+          <div class="sp-lbl">Tesla Fleet API 연결</div>
+          <div style="font-size:11px;color:var(--t2);line-height:1.8;margin-bottom:14px">MyTeslamate 스크립트로 발급받은<br>토큰과 앱 정보를 입력하세요</div>
+          <div style="font-size:9px;letter-spacing:1px;color:var(--t2);margin-bottom:4px">CLIENT ID</div>
+          <input class="sp-input" id="sp-cid" placeholder="9633ab40-xxxx-xxxx-xxxx-xxxxxxxxxxxx" autocomplete="off" spellcheck="false"/>
+          <div style="font-size:9px;letter-spacing:1px;color:var(--t2);margin-bottom:4px;margin-top:10px">CLIENT SECRET</div>
+          <input class="sp-input" id="sp-csec" type="password" placeholder="Client Secret" autocomplete="off"/>
+          <div style="font-size:9px;letter-spacing:1px;color:var(--t2);margin-bottom:4px;margin-top:10px">REFRESH TOKEN</div>
+          <input class="sp-input" id="sp-rtoken" placeholder="NA_xxxxx..." autocomplete="off" spellcheck="false"/>
+          <div style="font-size:9px;letter-spacing:1px;color:var(--t2);margin-bottom:4px;margin-top:10px">ACCESS TOKEN <span style="opacity:.4">(선택)</span></div>
+          <input class="sp-input" id="sp-atoken" placeholder="eyJhbGci..." autocomplete="off" spellcheck="false"/>
+          <button class="sp-btn sp-btn-red" style="margin-top:14px" onclick="connectRefresh()">연결하기</button>
+          <div class="sp-err" id="sp-err2"></div>
+        </div>
+        <div class="sp-note">⚠ 입력 정보는 이 기기에만 저장됩니다.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div class="root">
+
+
+  <div class="main">
+
+    <!-- 왼쪽: 속도 + 시계 -->
+    <div class="card card-left">
+
+      <div class="spd-section">
+        <div class="sec-lbl">SPEED</div>
+        <div class="spd-num" id="js-spd">0</div>
+        <div class="spd-unit">KM / H</div>
+        <div class="spd-gauge-wrap"><div class="spd-gauge-fill" id="js-spd-bar"></div></div>
+        <div class="spd-row">
+          <span class="spd-gear" id="js-gear">P</span>
+          <span class="spd-st" id="js-spd-st">STOP</span>
+          <span class="spd-kw" id="js-pwr">— kW</span>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="clock-section">
+        <div class="sec-lbl">TIME</div>
+        <div class="clock-time"><span id="js-clk-h">--</span><span class="clk-colon">:</span><span id="js-clk-m">--</span></div>
+        <div class="clock-date" id="js-dt">----.--.-- (--)</div>
+      </div>
+
+    </div>
+
+    <!-- 중앙: 투명 -->
+    <div class="void">
+      <div class="tesla-logo-wrap">
+        <img class="tesla-logo-img" src="tesla-logo.png" alt="Tesla">
+        <div class="copy-txt">COPYRIGHT BY MINTAE.KIM</div>
+      </div>
+    </div>
+
+    <!-- 오른쪽: 날씨 + 배터리 + 위치 -->
+    <div class="card card-right">
+
+      <!-- 배터리 섹션 -->
+      <div class="r-section">
+        <!-- 기기 배터리 -->
+        <div id="c4-device">
+          <div class="sec-lbl">BATTERY</div>
+          <div class="batt-row">
+            <div class="batt-num" id="js-bat">--%</div>
+          </div>
+          <div class="batt-bar-wrap"><div class="batt-fill" id="js-bar" style="width:0%"></div></div>
+          <div class="batt-sub" id="js-bst">Loading</div>
+        </div>
+        <!-- Tesla 배터리 -->
+        <div id="c4-tesla" style="display:none">
+          <div class="sec-lbl">VEHICLE BATTERY</div>
+          <div class="batt-row">
+            <div class="batt-num" id="tesla-batt-pct">--%</div>
+            <div class="batt-unit">SOC</div>
+          </div>
+          <div class="batt-bar-wrap"><div class="batt-fill" id="tesla-batt-bar" style="width:0%"></div></div>
+          <div class="batt-sub" id="tesla-batt-range">-- km</div>
+          <div class="batt-sub" id="tesla-batt-st" style="font-size:11px;opacity:.7;margin-top:2px"></div>
+        </div>
+      </div>
+
+      <div class="r-divider"></div>
+
+      <!-- 날씨 섹션 -->
+      <div class="r-section">
+        <div class="sec-lbl">WEATHER</div>
+        <div class="wx-temp" id="js-tmp">--°</div>
+        <div class="wx-desc" id="js-dsc">--</div>
+        <div class="wx-detail">
+          <div class="wx-d"><div class="wx-d-lbl">FEELS LIKE</div><div class="wx-d-val" id="js-feel">--°</div></div>
+          <div class="wx-d"><div class="wx-d-lbl">HUMIDITY</div><div class="wx-d-val" id="js-hum">--%</div></div>
+          <div class="wx-d"><div class="wx-d-lbl">WIND</div><div class="wx-d-val" id="js-wnd">--</div></div>
+        </div>
+      </div>
+
+
+    </div>
+
+  </div><!-- /main -->
+
+  <div class="strip">
+    <div class="conn" id="hdr-tesla" onclick="toggleSettings()">
+      <div class="sdot" id="hdr-dot"></div>
+      <span id="hdr-tesla-txt">Connect Tesla</span>
+      <span style="opacity:.45;margin-left:2px">⚙</span>
+    </div>
+    <div class="sitem"><div class="sdot" id="js-ndot"></div><span id="js-nst">Network</span></div>
+    <div class="sitem"><div class="sdot" id="js-gdot"></div><span id="js-gst">GPS</span></div>
+    <div class="sitem" id="js-upd">—</div>
+    <div class="fs-btn" id="js-fs" style="position:static;width:auto;height:auto;background:none;border:none;padding:0">⛶</div>
+  </div>
+
+</div>
+
+<script>
+const TS={
+  access:ls('t_access')||'',refresh:ls('t_refresh')||'',
+  expiry:+ls('t_expiry')||0,vid:ls('t_vid')||'',name:ls('t_name')||'',
+  clientId:ls('t_cid')||'',clientSec:ls('t_csec')||'',
+};
+const PROXY='https://corsproxy.io/?';
+const AUTH='https://fleet-auth.prd.vn.cloud.tesla.com/oauth2/v3';
+const TAPI='https://fleet-api.prd.na.vn.cloud.tesla.com';
+let teslaTimer=null,isTeslaConnected=false,pollInterval=30000;
+
+function $(id){return document.getElementById(id)}
+function set(id,v){const e=$(id);if(e)e.textContent=v}
+function dot(id,cls){const e=$(id);if(e)e.className='sdot '+cls}
+function pad(n){return String(n).padStart(2,'0')}
+function ls(k){return localStorage.getItem(k)}
+function lsSet(k,v){localStorage.setItem(k,v)}
+
+/* 풀스크린 */
+$('js-fs').addEventListener('click',toggleFS);
+document.addEventListener('click',function a(e){if(e.target===$('js-fs'))return;tryFS();document.removeEventListener('click',a);},{once:true,capture:true});
+function tryFS(){const el=document.documentElement;(el.requestFullscreen||el.webkitRequestFullscreen||el.mozRequestFullScreen)?.call(el)}
+function toggleFS(){if(!document.fullscreenElement&&!document.webkitFullscreenElement)tryFS();else(document.exitFullscreen||document.webkitExitFullscreen)?.call(document)}
+document.addEventListener('fullscreenchange',()=>{$('js-fs').textContent=document.fullscreenElement?'✕':'⛶'});
+
+/* 시계 */
+const DAYS=['SUN','MON','TUE','WED','THU','FRI','SAT'];
+function tick(){
+  const d=new Date();
+  set('js-clk-h',pad(d.getHours()));set('js-clk-m',pad(d.getMinutes()));
+  set('js-dt',d.getFullYear()+'.'+pad(d.getMonth()+1)+'.'+pad(d.getDate())+' ('+DAYS[d.getDay()]+')');
+}
+setInterval(tick,1000);tick();
+
+/* 속도/기어 */
+function setSpeed(kmh){
+  set('js-spd',kmh);
+  const bar=$('js-spd-bar');
+  if(bar){const pct=Math.min(100,Math.round(kmh/200*100));bar.style.width=pct+'%';}
+}
+function setGear(g){set('js-gear',g||'P')}
+
+/* GPS */
+let wxTs=0,prevLat=null,prevLon=null,prevGpsT=null;
+function startGPS(){
+  $('js-gps-ov').classList.remove('show');
+  if(!('geolocation'in navigator)){dot('js-gdot','err');set('js-gst','GPS N/A');return;}
+  navigator.geolocation.watchPosition(onGPS,onGPSErr,{enableHighAccuracy:true,timeout:10000,maximumAge:1000});
+}
+function onGPS(p){
+  $('js-gps-ov').classList.remove('show');
+  const{latitude:la,longitude:lo,accuracy:ac,speed:sp}=p.coords;const ts=p.timestamp;
+  let kmh=0;
+  if(sp!=null&&sp>=0){kmh=Math.round(sp*3.6);}
+  else if(prevLat!==null){const dt=(ts-prevGpsT)/1000;if(dt>0.5&&dt<8){const d=haversine(prevLat,prevLon,la,lo);const c=(d/dt)*3.6;kmh=c<250?Math.round(c):0;}}
+  prevLat=la;prevLon=lo;prevGpsT=ts;
+  if(!isTeslaConnected){setSpeed(kmh);set('js-spd-st',kmh>2?'DRIVING':'STOP');}
+  set('js-lat',la.toFixed(5)+'°N');set('js-lon',lo.toFixed(5)+'°E');set('js-acc','정확도 ±'+Math.round(ac)+'m');
+  dot('js-gdot','ok');set('js-gst','GPS Active');
+  const now=Date.now();if(now-wxTs>600000){wxTs=now;fetchWeather(la,lo);}
+  const t=new Date();set('js-upd',pad(t.getHours())+':'+pad(t.getMinutes())+':'+pad(t.getSeconds())+' 업데이트');
+}
+function onGPSErr(e){
+  dot('js-gdot','warn');set('js-gst',e.code===1?'GPS Blocked':'GPS Error');
+  if(!isTeslaConnected){set('js-spd','0');set('js-spd-st','NO GPS');}
+  if(!wxTs){wxTs=1;fetchWeather(37.5665,126.978);}
+}
+function haversine(φ1,λ1,φ2,λ2){
+  const R=6371000,dφ=(φ2-φ1)*Math.PI/180,dλ=(λ2-λ1)*Math.PI/180;
+  const a=Math.sin(dφ/2)**2+Math.cos(φ1*Math.PI/180)*Math.cos(φ2*Math.PI/180)*Math.sin(dλ/2)**2;
+  return 2*R*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+}
+startGPS();
+
+/* 날씨 */
+const WI={};
+const WD={0:'Clear',1:'Mostly Clear',2:'Partly Cloudy',3:'Overcast',45:'Fog',48:'Fog',51:'Drizzle',53:'Drizzle',55:'Drizzle',61:'Rain',63:'Rain',65:'Heavy Rain',71:'Snow',73:'Snow',75:'Heavy Snow',80:'Showers',81:'Showers',82:'Heavy Showers',95:'Thunderstorm',99:'Thunderstorm'};
+const WAVE_STYLE={
+  0:  {color:'rgba(255,200,60,0.14)',  dur:'14s'}, // 맑음 — 따뜻한 황금
+  1:  {color:'rgba(180,220,255,0.12)', dur:'13s'}, // 대체로 맑음 — 연하늘
+  2:  {color:'rgba(160,200,255,0.12)', dur:'12s'}, // 구름 조금
+  3:  {color:'rgba(140,145,160,0.10)', dur:'16s'}, // 흐림 — 회색, 느린
+  45: {color:'rgba(200,205,215,0.08)', dur:'20s'}, // 안개 — 매우 흐릿, 초느린
+  48: {color:'rgba(200,205,215,0.08)', dur:'20s'},
+  51: {color:'rgba(80,170,255,0.14)',  dur:'10s'}, // 이슬비 — 파랑
+  53: {color:'rgba(80,170,255,0.14)',  dur:'10s'},
+  55: {color:'rgba(60,150,255,0.15)',  dur:'9s'},
+  61: {color:'rgba(40,130,255,0.16)',  dur:'8s'},  // 비 — 빠른 파랑
+  63: {color:'rgba(40,130,255,0.18)',  dur:'7s'},
+  65: {color:'rgba(20,100,255,0.20)',  dur:'6s'},  // 강한 비
+  71: {color:'rgba(220,235,255,0.16)', dur:'16s'}, // 눈 — 흰색, 느린
+  73: {color:'rgba(220,235,255,0.16)', dur:'16s'},
+  75: {color:'rgba(220,235,255,0.18)', dur:'18s'},
+  80: {color:'rgba(0,160,255,0.16)',   dur:'8s'},  // 소나기
+  81: {color:'rgba(0,160,255,0.16)',   dur:'7s'},
+  82: {color:'rgba(0,140,255,0.18)',   dur:'6s'},
+  95: {color:'rgba(180,80,255,0.22)',  dur:'4s'},  // 뇌우 — 보라, 매우 빠름
+  99: {color:'rgba(200,60,255,0.24)',  dur:'3.5s'},
+};
+function applyWaveStyle(code){
+  const s=WAVE_STYLE[code]||{color:'rgba(0,220,255,0.12)',dur:'12s'};
+  document.documentElement.style.setProperty('--wave-color',s.color);
+  document.documentElement.style.setProperty('--wave-dur',s.dur);
+}
+
+async function fetchWeather(la,lo){
+  try{
+    const r=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${la}&longitude=${lo}&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m&wind_speed_unit=ms&timezone=auto`);
+    const{current:c}=await r.json();
+    set('js-wi',WI[c.weather_code]||'🌤️');set('js-tmp',Math.round(c.temperature_2m)+'°');
+    set('js-dsc',WD[c.weather_code]||'--');set('js-feel',Math.round(c.apparent_temperature)+'°');
+    set('js-hum',c.relative_humidity_2m+'%');set('js-wnd',c.wind_speed_10m+'m/s');
+    applyWaveStyle(c.weather_code);
+  }catch{set('js-dsc','Error');}
+}
+
+/* 기기 배터리 */
+navigator.getBattery?.().then(b=>{
+  function upd(){
+    const p=Math.round(b.level*100);
+    set('js-bat',p+'%');
+    set('js-bst',b.charging?'Charging ⚡':p<20?'⚠ Low Battery':'Normal');
+    const bar=$('js-bar');
+    if(bar){bar.style.width=p+'%';bar.style.background=p>50?'#2ECC71':p>20?'#E67E22':'#E31937';}
+  }
+  upd();b.addEventListener('levelchange',upd);b.addEventListener('chargingchange',upd);
+});
+
+/* 네트워크 / Wake Lock */
+function netUpd(){if(navigator.onLine){dot('js-ndot','ok');set('js-nst','Online')}else{dot('js-ndot','err');set('js-nst','Offline')}}
+window.addEventListener('online',netUpd);window.addEventListener('offline',netUpd);netUpd();
+async function reqWake(){try{if('wakeLock'in navigator)await navigator.wakeLock.request('screen')}catch{}}
+reqWake();
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')reqWake();});
+
+/* Tesla API */
+async function connectRefresh(){
+  const cid=$('sp-cid').value.trim(),csec=$('sp-csec').value.trim();
+  const rt=$('sp-rtoken').value.trim(),at=$('sp-atoken').value.trim();
+  if(!rt){showErr('sp-err2','Refresh Token을 입력해주세요');return;}
+  if(!cid){showErr('sp-err2','Client ID를 입력해주세요');return;}
+  try{
+    showErr('sp-err2','연결 중...');
+    TS.refresh=rt;TS.clientId=cid;TS.clientSec=csec;
+    lsSet('t_cid',cid);lsSet('t_csec',csec);lsSet('t_refresh',rt);
+    if(at){TS.access=at;TS.expiry=Date.now()+7*3600*1000;lsSet('t_access',at);lsSet('t_expiry',TS.expiry);}
+    else await renewToken();
+    await fetchVehicles();onConnected();
+  }catch(e){showErr('sp-err2','오류: '+(e.message||String(e)));console.error('[Tesla]',e);}
+}
+async function renewToken(){
+  const body=new URLSearchParams({grant_type:'refresh_token',client_id:TS.clientId,client_secret:TS.clientSec,refresh_token:TS.refresh});
+  const res=await fetch(PROXY+AUTH+'/token',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:body.toString()});
+  if(!res.ok)throw new Error('토큰 갱신 실패 '+res.status);
+  const data=await res.json();
+  if(!data.access_token)throw new Error('access_token 없음');
+  TS.access=data.access_token;TS.refresh=data.refresh_token||TS.refresh;
+  TS.expiry=Date.now()+((data.expires_in||28800)-300)*1000;
+  lsSet('t_access',TS.access);lsSet('t_refresh',TS.refresh);lsSet('t_expiry',TS.expiry);
+}
+async function getToken(){if(TS.access&&Date.now()<TS.expiry)return TS.access;await renewToken();return TS.access;}
+async function fetchVehicles(){
+  const token=await getToken();
+  const res=await fetch(PROXY+TAPI+'/api/1/vehicles',{headers:{Authorization:'Bearer '+token}});
+  if(!res.ok)throw new Error('차량 조회 실패');
+  const data=await res.json();
+  if(!data.response?.length)throw new Error('차량 없음');
+  const v=data.response[0];TS.vid=v.id_s;TS.name=v.display_name||'Model Y';
+  lsSet('t_vid',TS.vid);lsSet('t_name',TS.name);
+}
+async function wakeVehicle(){
+  try{const t=await getToken();await fetch(PROXY+TAPI+`/api/1/vehicles/${TS.vid}/wake_up`,{method:'POST',headers:{Authorization:'Bearer '+t}});}catch{}
+}
+function adjustPoll(isDriving){
+  const target=isDriving?10000:30000;
+  if(pollInterval===target)return;
+  pollInterval=target;
+  if(teslaTimer){clearInterval(teslaTimer);teslaTimer=setInterval(fetchVehicleData,pollInterval);}
+}
+async function fetchVehicleData(){
+  if(!TS.vid)return;
+  try{
+    const token=await getToken();
+    const ep=encodeURIComponent('drive_state;charge_state;climate_state;vehicle_state');
+    const res=await fetch(PROXY+TAPI+`/api/1/vehicles/${TS.vid}/vehicle_data?endpoints=${ep}`,{headers:{Authorization:'Bearer '+token}});
+    if(!res.ok){
+      if(res.status===408||res.status===503){dot('hdr-dot','warn');set('hdr-tesla-txt',(TS.name||'Tesla')+' Sleeping');wakeVehicle();}
+      else{dot('hdr-dot','err');set('hdr-tesla-txt','Error '+res.status);}
+      return;
+    }
+    const data=await res.json();
+    if(!data.response){dot('hdr-dot','warn');set('hdr-tesla-txt','No Response');return;}
+    dot('hdr-dot','ok');set('hdr-tesla-txt',TS.name||'Connected');
+    updateTeslaCards(data.response);
+    adjustPoll((data.response?.drive_state?.speed??0)>0);
+  }catch(e){console.warn('Tesla:',e.message);dot('hdr-dot','warn');set('hdr-tesla-txt','Retrying');}
+}
+function updateTeslaCards(v){
+  if(!v)return;
+  const cs=v.charge_state;
+  if(cs){
+    const pct=cs.battery_level??0,range=Math.round((cs.battery_range||0)*1.60934);
+    set('tesla-batt-pct',pct+'%');set('tesla-batt-range',range+' km range');
+    const chg=cs.charging_state;
+    set('tesla-batt-st',chg==='Charging'?`Charging +${Math.round((cs.charge_rate||0)*1.60934)}km/h`:chg==='Complete'?'Charged ✓':chg==='Disconnected'?'Unplugged':'');
+    const bar=$('tesla-batt-bar');
+    if(bar){bar.style.width=pct+'%';bar.style.background=pct>50?'#2ECC71':pct>20?'#E67E22':'#E31937';}
+  }
+  const cl=v.climate_state;
+  if(cl){
+    set('tesla-cabin',cl.inside_temp!=null?Math.round(cl.inside_temp)+'°':'--°');
+    set('tesla-outside',cl.outside_temp!=null?Math.round(cl.outside_temp)+'°':'--°');
+  }
+  const ds=v.drive_state;
+  if(ds){
+    if(ds.speed!=null){const kmh=Math.round(ds.speed*1.60934);setSpeed(kmh);set('js-spd-st',kmh>2?'DRIVING':'STOP');}
+    setGear(ds.shift_state||'P');
+    if(ds.power!=null){
+      const kw=Math.round(ds.power),txt=(kw>=0?'+':'')+kw+' kW';
+      const pwrEl=$('js-pwr');
+      if(pwrEl){pwrEl.textContent=txt;pwrEl.style.color=kw<0?'var(--cyan)':kw>80?'var(--amber)':'rgba(255,255,255,0.5)';}
+    }
+  }
+  const vs=v.vehicle_state;
+  if(vs){
+    set('tesla-lock',vs.locked?'🔒 잠김':'🔓 열림');
+    if(vs.odometer)set('tesla-odo',Math.round(vs.odometer*1.60934).toLocaleString()+' km');
+  }
+}
+function onConnected(){
+  isTeslaConnected=true;
+  $('c4-device').style.display='none';$('c4-tesla').style.display='block';
+  $('c5-gps').style.display='none';$('c5-tesla').style.display='block';
+  dot('hdr-dot','ok');set('hdr-tesla-txt',TS.name||'Connected');
+  set('sp-car-name',TS.name||'Model Y');
+  $('sp-connected').style.display='block';$('sp-disconnected').style.display='none';
+  dot('sp-dot','ok');set('sp-status-txt','연결됨 — '+TS.name);
+  pollInterval=30000;fetchVehicleData();
+  if(teslaTimer)clearInterval(teslaTimer);
+  teslaTimer=setInterval(fetchVehicleData,pollInterval);
+}
+function disconnect(){
+  isTeslaConnected=false;
+  if(teslaTimer){clearInterval(teslaTimer);teslaTimer=null;}
+  ['t_access','t_refresh','t_expiry','t_vid','t_name','t_cid','t_csec'].forEach(k=>localStorage.removeItem(k));
+  Object.assign(TS,{access:'',refresh:'',expiry:0,vid:'',name:'',clientId:'',clientSec:''});
+  $('c4-device').style.display='block';$('c4-tesla').style.display='none';
+  $('c5-gps').style.display='block';$('c5-tesla').style.display='none';
+  dot('hdr-dot','');set('hdr-tesla-txt','Connect Tesla');
+  dot('sp-dot','');set('sp-status-txt','연결 안됨');
+  $('sp-connected').style.display='none';$('sp-disconnected').style.display='block';
+  toggleSettings();
+}
+function toggleSettings(){$('js-settings-ov').classList.toggle('show')}
+function closeSP(e){if(e.target===$('js-settings-ov'))toggleSettings()}
+function showErr(id,msg){const el=$(id);if(!el)return;el.textContent=msg;el.className='sp-err'+(msg?' show':'');}
+
+(async()=>{
+  if(TS.refresh){
+    try{if(!TS.vid)await fetchVehicles();onConnected();}
+    catch(e){console.warn('Auto reconnect:',e.message);dot('hdr-dot','err');set('hdr-tesla-txt','Reconnect Failed');}
+  }
+})();
+</script>
+</body>
+</html>
