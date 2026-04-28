@@ -136,6 +136,8 @@ html,body{
   font-weight:100;letter-spacing:3px;line-height:1;color:var(--t0);
   font-family:Impact,sans-serif;
 }
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+.clk-colon{animation:blink 1s step-start infinite}
 .clock-date{font-size:13px;color:var(--t2);letter-spacing:2px;margin-top:8px;font-family:Impact,sans-serif}
 
 /* ── 중앙 투명: 카드 너비 동일(35%씩)하면 void 가 정확히 중앙 ── */
@@ -333,7 +335,7 @@ html,body{
 
       <div class="clock-section">
         <div class="sec-lbl">TIME</div>
-        <div class="clock-time" id="js-clk">--:--</div>
+        <div class="clock-time"><span id="js-clk-h">--</span><span class="clk-colon">:</span><span id="js-clk-m">--</span></div>
         <div class="clock-date" id="js-dt">----.--.-- (--)</div>
       </div>
 
@@ -427,7 +429,7 @@ document.addEventListener('fullscreenchange',()=>{$('js-fs').textContent=documen
 const DAYS=['SUN','MON','TUE','WED','THU','FRI','SAT'];
 function tick(){
   const d=new Date();
-  set('js-clk',pad(d.getHours())+':'+pad(d.getMinutes()));
+  set('js-clk-h',pad(d.getHours()));set('js-clk-m',pad(d.getMinutes()));
   set('js-dt',d.getFullYear()+'.'+pad(d.getMonth()+1)+'.'+pad(d.getDate())+' ('+DAYS[d.getDay()]+')');
 }
 setInterval(tick,1000);tick();
