@@ -76,7 +76,7 @@ html,body{
   border:1px solid var(--gb);
   border-radius:18px;
   backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
-  padding:18px 22px;
+  padding:16px 20px;
   display:flex;flex-direction:column;
   position:relative;overflow:hidden;
 }
@@ -85,42 +85,67 @@ html,body{
   background:linear-gradient(90deg,transparent,rgba(255,255,255,0.12),transparent);
 }
 
-/* ── 왼쪽: 속도 + 시계 ── */
-.card-left{width:36%;justify-content:space-between}
-
+/* ── 왼쪽: 속도 + 시계 — 각 섹션이 절반씩 차지, 중앙 정렬 ── */
+.card-left{
+  width:35%;
+  justify-content:space-between;
+}
+/* 속도 섹션: 카드 절반 높이, 중앙 정렬 */
+.spd-section{
+  flex:1;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  text-align:center;
+}
 .spd-num{
-  font-size:clamp(72px,17vh,130px);
+  font-size:clamp(90px,21vh,160px);
   font-weight:200;
-  letter-spacing:-4px;
-  line-height:0.9;
+  letter-spacing:-6px;
+  line-height:0.88;
   color:var(--t0);
   font-variant-numeric:tabular-nums;
 }
 .spd-unit{
-  font-size:11px;letter-spacing:5px;
-  color:var(--t2);margin-top:6px;
+  font-size:12px;letter-spacing:6px;
+  color:var(--t2);margin-top:8px;
 }
 .spd-row{
-  display:flex;align-items:center;gap:14px;
+  display:flex;align-items:center;justify-content:center;gap:16px;
   margin-top:10px;
 }
-.spd-gear{font-size:20px;font-weight:300;color:var(--red);min-width:20px}
-.spd-st{font-size:13px;color:var(--t1)}
-.spd-kw{font-size:13px;font-weight:300;color:var(--green)}
+.spd-gear{font-size:22px;font-weight:300;color:var(--red)}
+.spd-st{font-size:14px;color:var(--t1)}
+.spd-kw{font-size:14px;font-weight:300;color:var(--green)}
 
-.divider{height:1px;background:rgba(255,255,255,0.08);margin:14px 0;flex-shrink:0}
+.divider{height:1px;background:rgba(255,255,255,0.08);flex-shrink:0}
 
-.clock-time{
-  font-size:clamp(40px,9vh,72px);
-  font-weight:100;letter-spacing:2px;line-height:1;color:var(--t0);
+/* 시계 섹션: 카드 절반 높이, 중앙 정렬 */
+.clock-section{
+  flex:1;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  text-align:center;
 }
-.clock-date{font-size:12px;color:var(--t2);letter-spacing:1.5px;margin-top:6px}
+.clock-time{
+  font-size:clamp(48px,11vh,88px);
+  font-weight:100;letter-spacing:3px;line-height:1;color:var(--t0);
+}
+.clock-date{font-size:13px;color:var(--t2);letter-spacing:2px;margin-top:8px}
 
-/* ── 중앙 투명 (테슬라 사진 노출) ── */
+/* ── 중앙 투명: 카드 너비 동일(35%씩)하면 void 가 정확히 중앙 ── */
 .void{flex:1;pointer-events:none}
 
-/* ── 오른쪽: 날씨 + 배터리 + 위치 ── */
-.card-right{width:34%;justify-content:space-between}
+/* ── 오른쪽: 날씨 + 배터리 + 위치 — 3섹션이 균등하게 카드를 꽉 채움 ── */
+.card-right{width:35%;justify-content:space-between}
+
+/* 각 섹션이 flex:1로 카드 높이를 균등 분할, 세로 중앙 정렬 */
+.r-section{
+  flex:1;
+  display:flex;flex-direction:column;
+  justify-content:center;
+  min-height:0;
+}
+.r-divider{height:1px;background:rgba(255,255,255,0.07);flex-shrink:0}
 
 .sec-lbl{
   font-size:10px;letter-spacing:3px;color:var(--t2);
@@ -128,32 +153,32 @@ html,body{
 }
 
 /* 날씨 */
-.wx-main{display:flex;align-items:center;gap:12px;margin-bottom:8px}
-.wx-ico{font-size:clamp(28px,5vh,44px);line-height:1}
-.wx-temp{font-size:clamp(32px,7vh,52px);font-weight:200;line-height:1}
-.wx-desc{font-size:13px;color:var(--t1);margin-top:3px}
-.wx-detail{display:flex;gap:10px}
+.wx-main{display:flex;align-items:center;gap:14px;margin-bottom:8px}
+.wx-ico{font-size:clamp(34px,6.5vh,52px);line-height:1}
+.wx-temp{font-size:clamp(40px,9vh,68px);font-weight:200;line-height:1}
+.wx-desc{font-size:13px;color:var(--t1);margin-top:4px}
+.wx-detail{display:flex;gap:8px}
 .wx-d{flex:1}
 .wx-d-lbl{font-size:10px;letter-spacing:2px;color:var(--t2)}
-.wx-d-val{font-size:14px;font-weight:300;color:var(--t1);margin-top:3px}
+.wx-d-val{font-size:15px;font-weight:300;color:var(--t1);margin-top:4px}
 
 /* 배터리 */
 .batt-row{display:flex;align-items:baseline;gap:8px}
-.batt-num{font-size:clamp(30px,6.5vh,48px);font-weight:200;line-height:1}
-.batt-unit{font-size:11px;color:var(--t2);letter-spacing:2px}
-.batt-bar-wrap{height:4px;background:rgba(255,255,255,0.1);border-radius:2px;overflow:hidden;margin:8px 0}
-.batt-fill{height:100%;border-radius:2px;transition:width .6s,background .4s}
-.batt-sub{font-size:12px;color:var(--t1)}
+.batt-num{font-size:clamp(40px,9vh,68px);font-weight:200;line-height:1}
+.batt-unit{font-size:13px;color:var(--t2);letter-spacing:2px}
+.batt-bar-wrap{height:5px;background:rgba(255,255,255,0.1);border-radius:3px;overflow:hidden;margin:10px 0 6px}
+.batt-fill{height:100%;border-radius:3px;transition:width .6s,background .4s}
+.batt-sub{font-size:13px;color:var(--t1)}
 
 /* 위치 */
-.loc-val{font-size:12px;font-weight:300;color:var(--t1);font-family:'SF Mono',monospace;margin-top:4px}
-.loc-acc{font-size:11px;color:var(--t2);margin-top:3px}
+.loc-val{font-size:14px;font-weight:300;color:var(--t1);font-family:'SF Mono',monospace;margin-top:5px}
+.loc-acc{font-size:12px;color:var(--t2);margin-top:4px}
 
 /* Tesla 차량 정보 */
-.info-row{display:flex;justify-content:space-between;margin-top:5px}
-.info-item{display:flex;flex-direction:column;gap:2px}
+.info-row{display:flex;justify-content:space-between;margin-top:6px;gap:8px}
+.info-item{display:flex;flex-direction:column;gap:3px;flex:1}
 .info-lbl{font-size:10px;letter-spacing:2px;color:var(--t2)}
-.info-val{font-size:15px;font-weight:300;color:var(--t0)}
+.info-val{font-size:clamp(16px,3.5vh,22px);font-weight:300;color:var(--t0)}
 
 /* ── 하단 상태 바 ── */
 .strip{
@@ -283,7 +308,7 @@ html,body{
     <!-- 왼쪽: 속도 + 시계 -->
     <div class="card card-left">
 
-      <div>
+      <div class="spd-section">
         <div class="spd-num" id="js-spd">0</div>
         <div class="spd-unit">KM / H</div>
         <div class="spd-row">
@@ -295,7 +320,7 @@ html,body{
 
       <div class="divider"></div>
 
-      <div>
+      <div class="clock-section">
         <div class="clock-time" id="js-clk">--:--</div>
         <div class="clock-date" id="js-dt">----.--.-- (--)</div>
       </div>
@@ -308,8 +333,8 @@ html,body{
     <!-- 오른쪽: 날씨 + 배터리 + 위치 -->
     <div class="card card-right">
 
-      <!-- 날씨 -->
-      <div>
+      <!-- 날씨 섹션 -->
+      <div class="r-section">
         <div class="sec-lbl">날씨</div>
         <div class="wx-main">
           <div class="wx-ico" id="js-wi">—</div>
@@ -319,23 +344,16 @@ html,body{
           </div>
         </div>
         <div class="wx-detail">
-          <div class="wx-d">
-            <div class="wx-d-lbl">체감</div>
-            <div class="wx-d-val" id="js-feel">--°</div>
-          </div>
-          <div class="wx-d">
-            <div class="wx-d-lbl">습도</div>
-            <div class="wx-d-val" id="js-hum">--%</div>
-          </div>
-          <div class="wx-d">
-            <div class="wx-d-lbl">바람</div>
-            <div class="wx-d-val" id="js-wnd">--</div>
-          </div>
+          <div class="wx-d"><div class="wx-d-lbl">체감</div><div class="wx-d-val" id="js-feel">--°</div></div>
+          <div class="wx-d"><div class="wx-d-lbl">습도</div><div class="wx-d-val" id="js-hum">--%</div></div>
+          <div class="wx-d"><div class="wx-d-lbl">바람</div><div class="wx-d-val" id="js-wnd">--</div></div>
         </div>
       </div>
 
-      <!-- 배터리 -->
-      <div>
+      <div class="r-divider"></div>
+
+      <!-- 배터리 섹션 -->
+      <div class="r-section">
         <!-- 기기 배터리 -->
         <div id="c4-device">
           <div class="sec-lbl">기기 배터리</div>
@@ -354,12 +372,14 @@ html,body{
           </div>
           <div class="batt-bar-wrap"><div class="batt-fill" id="tesla-batt-bar" style="width:0%"></div></div>
           <div class="batt-sub" id="tesla-batt-range">-- km</div>
-          <div class="batt-sub" id="tesla-batt-st" style="font-size:11px;opacity:.7"></div>
+          <div class="batt-sub" id="tesla-batt-st" style="font-size:11px;opacity:.7;margin-top:2px"></div>
         </div>
       </div>
 
-      <!-- 위치 / 차량 정보 -->
-      <div>
+      <div class="r-divider"></div>
+
+      <!-- 위치 / 차량 정보 섹션 -->
+      <div class="r-section">
         <!-- GPS -->
         <div id="c5-gps">
           <div class="sec-lbl">현재 위치</div>
@@ -371,18 +391,9 @@ html,body{
         <div id="c5-tesla" style="display:none">
           <div class="sec-lbl">차량 정보</div>
           <div class="info-row">
-            <div class="info-item">
-              <div class="info-lbl">실내</div>
-              <div class="info-val" id="tesla-cabin">--°</div>
-            </div>
-            <div class="info-item">
-              <div class="info-lbl">외부</div>
-              <div class="info-val" id="tesla-outside">--°</div>
-            </div>
-            <div class="info-item">
-              <div class="info-lbl">잠금</div>
-              <div class="info-val" id="tesla-lock">--</div>
-            </div>
+            <div class="info-item"><div class="info-lbl">실내</div><div class="info-val" id="tesla-cabin">--°</div></div>
+            <div class="info-item"><div class="info-lbl">외부</div><div class="info-val" id="tesla-outside">--°</div></div>
+            <div class="info-item"><div class="info-lbl">잠금</div><div class="info-val" id="tesla-lock">--</div></div>
           </div>
           <div class="loc-acc" id="tesla-odo" style="margin-top:6px">-- km</div>
         </div>
