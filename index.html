@@ -106,7 +106,7 @@ html,body{
   color:var(--t0);
   font-variant-numeric:tabular-nums;
 }
-.spd-unit{
+.spd-unit{font-family:Impact,sans-serif;
   font-size:12px;letter-spacing:6px;
   color:var(--t2);margin-top:8px;
 }
@@ -114,9 +114,9 @@ html,body{
   display:flex;align-items:center;justify-content:center;gap:16px;
   margin-top:10px;
 }
-.spd-gear{font-size:22px;font-weight:300;color:var(--red)}
-.spd-st{font-size:14px;color:var(--t1)}
-.spd-kw{font-size:14px;font-weight:300;color:var(--green)}
+.spd-gear{font-size:22px;font-weight:300;color:var(--red);font-family:Impact,sans-serif}
+.spd-st{font-size:14px;color:var(--t1);font-family:Impact,sans-serif}
+.spd-kw{font-size:14px;font-weight:300;color:var(--green);font-family:Impact,sans-serif}
 
 .divider{height:1px;background:rgba(255,255,255,0.08);flex-shrink:0}
 
@@ -132,7 +132,7 @@ html,body{
   font-weight:100;letter-spacing:3px;line-height:1;color:var(--t0);
   font-family:Impact,sans-serif;
 }
-.clock-date{font-size:13px;color:var(--t2);letter-spacing:2px;margin-top:8px}
+.clock-date{font-size:13px;color:var(--t2);letter-spacing:2px;margin-top:8px;font-family:Impact,sans-serif}
 
 /* ── 중앙 투명: 카드 너비 동일(35%씩)하면 void 가 정확히 중앙 ── */
 .void{flex:1;pointer-events:none;position:relative}
@@ -160,6 +160,7 @@ html,body{
 .sec-lbl{
   font-size:10px;letter-spacing:3px;color:var(--t2);
   text-transform:uppercase;margin-bottom:8px;
+  font-family:Impact,sans-serif;
 }
 
 /* 날씨 */
@@ -176,7 +177,7 @@ html,body{
 .batt-unit{font-size:13px;color:var(--t2);letter-spacing:2px}
 .batt-bar-wrap{height:5px;background:rgba(255,255,255,0.1);border-radius:3px;overflow:hidden;margin:10px 0 6px}
 .batt-fill{height:100%;border-radius:3px;transition:width .6s,background .4s}
-.batt-sub{font-size:13px;color:var(--t1)}
+.batt-sub{font-size:13px;color:var(--t1);font-family:Impact,sans-serif}
 
 /* 위치 */
 .loc-val{font-size:14px;font-weight:300;color:var(--t1);font-family:'SF Mono',monospace;margin-top:5px}
@@ -302,7 +303,7 @@ html,body{
   <div class="topbar">
     <div class="conn" id="hdr-tesla" onclick="toggleSettings()">
       <div class="sdot" id="hdr-dot"></div>
-      <span id="hdr-tesla-txt">Tesla 연결</span>
+      <span id="hdr-tesla-txt">Connect Tesla</span>
       <span style="font-size:13px;opacity:.45;margin-left:2px">⚙</span>
     </div>
   </div>
@@ -317,7 +318,7 @@ html,body{
         <div class="spd-unit">KM / H</div>
         <div class="spd-row">
           <span class="spd-gear" id="js-gear">P</span>
-          <span class="spd-st" id="js-spd-st">정지</span>
+          <span class="spd-st" id="js-spd-st">STOP</span>
           <span class="spd-kw" id="js-pwr">— kW</span>
         </div>
       </div>
@@ -341,7 +342,7 @@ html,body{
 
       <!-- 날씨 섹션 -->
       <div class="r-section">
-        <div class="sec-lbl">날씨</div>
+        <div class="sec-lbl">WEATHER</div>
         <div class="wx-temp" id="js-tmp">--°</div>
         <div class="wx-desc" id="js-dsc">--</div>
         <div class="wx-detail">
@@ -357,16 +358,16 @@ html,body{
       <div class="r-section">
         <!-- 기기 배터리 -->
         <div id="c4-device">
-          <div class="sec-lbl">기기 배터리</div>
+          <div class="sec-lbl">BATTERY</div>
           <div class="batt-row">
             <div class="batt-num" id="js-bat">--%</div>
           </div>
           <div class="batt-bar-wrap"><div class="batt-fill" id="js-bar" style="width:0%"></div></div>
-          <div class="batt-sub" id="js-bst">확인중</div>
+          <div class="batt-sub" id="js-bst">Loading</div>
         </div>
         <!-- Tesla 배터리 -->
         <div id="c4-tesla" style="display:none">
-          <div class="sec-lbl">차량 배터리</div>
+          <div class="sec-lbl">VEHICLE BATTERY</div>
           <div class="batt-row">
             <div class="batt-num" id="tesla-batt-pct">--%</div>
             <div class="batt-unit">SOC</div>
@@ -383,7 +384,7 @@ html,body{
   </div><!-- /main -->
 
   <div class="strip">
-    <div class="sitem"><div class="sdot" id="js-ndot"></div><span id="js-nst">네트워크</span></div>
+    <div class="sitem"><div class="sdot" id="js-ndot"></div><span id="js-nst">Network</span></div>
     <div class="sitem"><div class="sdot" id="js-gdot"></div><span id="js-gst">GPS</span></div>
     <div class="sitem" id="js-upd" style="font-size:11px;color:var(--t2)">—</div>
   </div>
@@ -416,7 +417,7 @@ function toggleFS(){if(!document.fullscreenElement&&!document.webkitFullscreenEl
 document.addEventListener('fullscreenchange',()=>{$('js-fs').textContent=document.fullscreenElement?'✕':'⛶'});
 
 /* 시계 */
-const DAYS=['일','월','화','수','목','금','토'];
+const DAYS=['SUN','MON','TUE','WED','THU','FRI','SAT'];
 function tick(){
   const d=new Date();
   set('js-clk',pad(d.getHours())+':'+pad(d.getMinutes()));
@@ -432,7 +433,7 @@ function setGear(g){set('js-gear',g||'P')}
 let wxTs=0,prevLat=null,prevLon=null,prevGpsT=null;
 function startGPS(){
   $('js-gps-ov').classList.remove('show');
-  if(!('geolocation'in navigator)){dot('js-gdot','err');set('js-gst','GPS 미지원');return;}
+  if(!('geolocation'in navigator)){dot('js-gdot','err');set('js-gst','GPS N/A');return;}
   navigator.geolocation.watchPosition(onGPS,onGPSErr,{enableHighAccuracy:true,timeout:10000,maximumAge:1000});
 }
 function onGPS(p){
@@ -442,15 +443,15 @@ function onGPS(p){
   if(sp!=null&&sp>=0){kmh=Math.round(sp*3.6);}
   else if(prevLat!==null){const dt=(ts-prevGpsT)/1000;if(dt>0.5&&dt<8){const d=haversine(prevLat,prevLon,la,lo);const c=(d/dt)*3.6;kmh=c<250?Math.round(c):0;}}
   prevLat=la;prevLon=lo;prevGpsT=ts;
-  if(!isTeslaConnected){setSpeed(kmh);set('js-spd-st',kmh>2?'주행중':'정지');}
+  if(!isTeslaConnected){setSpeed(kmh);set('js-spd-st',kmh>2?'DRIVING':'STOP');}
   set('js-lat',la.toFixed(5)+'°N');set('js-lon',lo.toFixed(5)+'°E');set('js-acc','정확도 ±'+Math.round(ac)+'m');
-  dot('js-gdot','ok');set('js-gst','GPS 활성');
+  dot('js-gdot','ok');set('js-gst','GPS Active');
   const now=Date.now();if(now-wxTs>600000){wxTs=now;fetchWeather(la,lo);}
   const t=new Date();set('js-upd',pad(t.getHours())+':'+pad(t.getMinutes())+':'+pad(t.getSeconds())+' 업데이트');
 }
 function onGPSErr(e){
-  dot('js-gdot','warn');set('js-gst',e.code===1?'GPS 차단됨':'GPS 오류');
-  if(!isTeslaConnected){set('js-spd','0');set('js-spd-st','GPS 없음');}
+  dot('js-gdot','warn');set('js-gst',e.code===1?'GPS Blocked':'GPS Error');
+  if(!isTeslaConnected){set('js-spd','0');set('js-spd-st','NO GPS');}
   if(!wxTs){wxTs=1;fetchWeather(37.5665,126.978);}
 }
 function haversine(φ1,λ1,φ2,λ2){
@@ -468,9 +469,9 @@ async function fetchWeather(la,lo){
     const r=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${la}&longitude=${lo}&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m&wind_speed_unit=ms&timezone=auto`);
     const{current:c}=await r.json();
     set('js-wi',WI[c.weather_code]||'🌤️');set('js-tmp',Math.round(c.temperature_2m)+'°');
-    set('js-dsc',WD[c.weather_code]||'날씨');set('js-feel',Math.round(c.apparent_temperature)+'°');
+    set('js-dsc',WD[c.weather_code]||'--');set('js-feel',Math.round(c.apparent_temperature)+'°');
     set('js-hum',c.relative_humidity_2m+'%');set('js-wnd',c.wind_speed_10m+'m/s');
-  }catch{set('js-dsc','날씨 오류');}
+  }catch{set('js-dsc','Error');}
 }
 
 /* 기기 배터리 */
@@ -478,7 +479,7 @@ navigator.getBattery?.().then(b=>{
   function upd(){
     const p=Math.round(b.level*100);
     set('js-bat',p+'%');
-    set('js-bst',b.charging?'충전 중 ⚡':p<20?'⚠ 충전 필요':'정상');
+    set('js-bst',b.charging?'Charging ⚡':p<20?'⚠ Low Battery':'Normal');
     const bar=$('js-bar');
     if(bar){bar.style.width=p+'%';bar.style.background=p>50?'#2ECC71':p>20?'#E67E22':'#E31937';}
   }
@@ -486,7 +487,7 @@ navigator.getBattery?.().then(b=>{
 });
 
 /* 네트워크 / Wake Lock */
-function netUpd(){if(navigator.onLine){dot('js-ndot','ok');set('js-nst','온라인')}else{dot('js-ndot','err');set('js-nst','오프라인')}}
+function netUpd(){if(navigator.onLine){dot('js-ndot','ok');set('js-nst','Online')}else{dot('js-ndot','err');set('js-nst','Offline')}}
 window.addEventListener('online',netUpd);window.addEventListener('offline',netUpd);netUpd();
 async function reqWake(){try{if('wakeLock'in navigator)await navigator.wakeLock.request('screen')}catch{}}
 reqWake();
@@ -543,25 +544,25 @@ async function fetchVehicleData(){
     const ep=encodeURIComponent('drive_state;charge_state;climate_state;vehicle_state');
     const res=await fetch(PROXY+TAPI+`/api/1/vehicles/${TS.vid}/vehicle_data?endpoints=${ep}`,{headers:{Authorization:'Bearer '+token}});
     if(!res.ok){
-      if(res.status===408||res.status===503){dot('hdr-dot','warn');set('hdr-tesla-txt',(TS.name||'Tesla')+' 절전중');wakeVehicle();}
-      else{dot('hdr-dot','err');set('hdr-tesla-txt','오류 '+res.status);}
+      if(res.status===408||res.status===503){dot('hdr-dot','warn');set('hdr-tesla-txt',(TS.name||'Tesla')+' Sleeping');wakeVehicle();}
+      else{dot('hdr-dot','err');set('hdr-tesla-txt','Error '+res.status);}
       return;
     }
     const data=await res.json();
-    if(!data.response){dot('hdr-dot','warn');set('hdr-tesla-txt','응답없음');return;}
-    dot('hdr-dot','ok');set('hdr-tesla-txt',TS.name||'연결됨');
+    if(!data.response){dot('hdr-dot','warn');set('hdr-tesla-txt','No Response');return;}
+    dot('hdr-dot','ok');set('hdr-tesla-txt',TS.name||'Connected');
     updateTeslaCards(data.response);
     adjustPoll((data.response?.drive_state?.speed??0)>0);
-  }catch(e){console.warn('Tesla:',e.message);dot('hdr-dot','warn');set('hdr-tesla-txt','재시도중');}
+  }catch(e){console.warn('Tesla:',e.message);dot('hdr-dot','warn');set('hdr-tesla-txt','Retrying');}
 }
 function updateTeslaCards(v){
   if(!v)return;
   const cs=v.charge_state;
   if(cs){
     const pct=cs.battery_level??0,range=Math.round((cs.battery_range||0)*1.60934);
-    set('tesla-batt-pct',pct+'%');set('tesla-batt-range',range+'km 주행가능');
+    set('tesla-batt-pct',pct+'%');set('tesla-batt-range',range+' km range');
     const chg=cs.charging_state;
-    set('tesla-batt-st',chg==='Charging'?`충전중 +${Math.round((cs.charge_rate||0)*1.60934)}km/h`:chg==='Complete'?'충전완료 ✓':chg==='Disconnected'?'충전기 미연결':'');
+    set('tesla-batt-st',chg==='Charging'?`Charging +${Math.round((cs.charge_rate||0)*1.60934)}km/h`:chg==='Complete'?'Charged ✓':chg==='Disconnected'?'Unplugged':'');
     const bar=$('tesla-batt-bar');
     if(bar){bar.style.width=pct+'%';bar.style.background=pct>50?'#2ECC71':pct>20?'#E67E22':'#E31937';}
   }
@@ -572,7 +573,7 @@ function updateTeslaCards(v){
   }
   const ds=v.drive_state;
   if(ds){
-    if(ds.speed!=null){const kmh=Math.round(ds.speed*1.60934);setSpeed(kmh);set('js-spd-st',kmh>2?'주행중':'정지');}
+    if(ds.speed!=null){const kmh=Math.round(ds.speed*1.60934);setSpeed(kmh);set('js-spd-st',kmh>2?'DRIVING':'STOP');}
     setGear(ds.shift_state||'P');
     if(ds.power!=null){
       const kw=Math.round(ds.power),txt=(kw>=0?'+':'')+kw+' kW';
@@ -590,7 +591,7 @@ function onConnected(){
   isTeslaConnected=true;
   $('c4-device').style.display='none';$('c4-tesla').style.display='block';
   $('c5-gps').style.display='none';$('c5-tesla').style.display='block';
-  dot('hdr-dot','ok');set('hdr-tesla-txt',TS.name||'연결됨');
+  dot('hdr-dot','ok');set('hdr-tesla-txt',TS.name||'Connected');
   set('sp-car-name',TS.name||'Model Y');
   $('sp-connected').style.display='block';$('sp-disconnected').style.display='none';
   dot('sp-dot','ok');set('sp-status-txt','연결됨 — '+TS.name);
@@ -605,7 +606,7 @@ function disconnect(){
   Object.assign(TS,{access:'',refresh:'',expiry:0,vid:'',name:'',clientId:'',clientSec:''});
   $('c4-device').style.display='block';$('c4-tesla').style.display='none';
   $('c5-gps').style.display='block';$('c5-tesla').style.display='none';
-  dot('hdr-dot','');set('hdr-tesla-txt','Tesla 연결');
+  dot('hdr-dot','');set('hdr-tesla-txt','Connect Tesla');
   dot('sp-dot','');set('sp-status-txt','연결 안됨');
   $('sp-connected').style.display='none';$('sp-disconnected').style.display='block';
   toggleSettings();
@@ -617,7 +618,7 @@ function showErr(id,msg){const el=$(id);if(!el)return;el.textContent=msg;el.clas
 (async()=>{
   if(TS.refresh){
     try{if(!TS.vid)await fetchVehicles();onConnected();}
-    catch(e){console.warn('자동 재연결:',e.message);dot('hdr-dot','err');set('hdr-tesla-txt','재연결 실패');}
+    catch(e){console.warn('Auto reconnect:',e.message);dot('hdr-dot','err');set('hdr-tesla-txt','Reconnect Failed');}
   }
 })();
 </script>
