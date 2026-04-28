@@ -342,20 +342,6 @@ html,body{
     <!-- 오른쪽: 날씨 + 배터리 + 위치 -->
     <div class="card card-right">
 
-      <!-- 날씨 섹션 -->
-      <div class="r-section">
-        <div class="sec-lbl">WEATHER</div>
-        <div class="wx-temp" id="js-tmp">--°</div>
-        <div class="wx-desc" id="js-dsc">--</div>
-        <div class="wx-detail">
-          <div class="wx-d"><div class="wx-d-lbl">FEELS LIKE</div><div class="wx-d-val" id="js-feel">--°</div></div>
-          <div class="wx-d"><div class="wx-d-lbl">HUMIDITY</div><div class="wx-d-val" id="js-hum">--%</div></div>
-          <div class="wx-d"><div class="wx-d-lbl">WIND</div><div class="wx-d-val" id="js-wnd">--</div></div>
-        </div>
-      </div>
-
-      <div class="r-divider"></div>
-
       <!-- 배터리 섹션 -->
       <div class="r-section">
         <!-- 기기 배터리 -->
@@ -377,6 +363,20 @@ html,body{
           <div class="batt-bar-wrap"><div class="batt-fill" id="tesla-batt-bar" style="width:0%"></div></div>
           <div class="batt-sub" id="tesla-batt-range">-- km</div>
           <div class="batt-sub" id="tesla-batt-st" style="font-size:11px;opacity:.7;margin-top:2px"></div>
+        </div>
+      </div>
+
+      <div class="r-divider"></div>
+
+      <!-- 날씨 섹션 -->
+      <div class="r-section">
+        <div class="sec-lbl">WEATHER</div>
+        <div class="wx-temp" id="js-tmp">--°</div>
+        <div class="wx-desc" id="js-dsc">--</div>
+        <div class="wx-detail">
+          <div class="wx-d"><div class="wx-d-lbl">FEELS LIKE</div><div class="wx-d-val" id="js-feel">--°</div></div>
+          <div class="wx-d"><div class="wx-d-lbl">HUMIDITY</div><div class="wx-d-val" id="js-hum">--%</div></div>
+          <div class="wx-d"><div class="wx-d-lbl">WIND</div><div class="wx-d-val" id="js-wnd">--</div></div>
         </div>
       </div>
 
