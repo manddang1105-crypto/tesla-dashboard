@@ -9,248 +9,208 @@
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --red:#E31937;--bg0:#070709;--bg1:#0f0f12;--bg2:#161618;
-  --line:#1c1c20;--t0:#fff;--t1:#777;--t2:#333;
-  --green:#2ECC71;--amber:#E67E22;--cyan:#00DCFF;
-  --road-dur:2.5s;
-  /* 분할화면 대응: 뷰포트 높이 기준으로 자동 조정 */
-  --ph: clamp(6px, 1.2vh, 10px);   /* 루트 패딩 세로 */
-  --pw: clamp(10px, 1.5vw, 14px);  /* 루트 패딩 가로 */
-  --gap: clamp(6px, 1vh, 10px);    /* 카드 간격 */
-  --pp: clamp(8px, 1.4vh, 13px);   /* 패널 내부 패딩 */
+  --red:#E31937;--green:#2ECC71;--amber:#E67E22;--cyan:#00DCFF;
+  --glass:rgba(0,0,0,0.52);--gb:rgba(255,255,255,0.065);
+  --t0:#fff;--t1:rgba(255,255,255,0.55);--t2:rgba(255,255,255,0.22);
 }
 html,body{
-  width:100vw;height:100vh;overflow:hidden;
-  background:var(--bg0);color:var(--t0);
-  font-family:-apple-system,'SF Pro Display','Helvetica Neue',Arial,sans-serif;
+  width:100vw;height:100vh;overflow:hidden;background:#000;
+  font-family:-apple-system,'Helvetica Neue',Arial,sans-serif;
   -webkit-font-smoothing:antialiased;
   user-select:none;-webkit-user-select:none;
 }
+
+/* ── 배경 이미지 ── */
+.bg{
+  position:fixed;inset:0;z-index:0;
+  background:url('bg.jpg') center center/cover no-repeat;
+  filter:brightness(0.7);
+}
+.bg::after{
+  content:'';position:absolute;inset:0;
+  background:
+    linear-gradient(90deg,
+      rgba(0,0,0,0.72) 0%,
+      rgba(0,0,0,0.15) 30%,
+      rgba(0,0,0,0.0) 50%,
+      rgba(0,0,0,0.15) 70%,
+      rgba(0,0,0,0.72) 100%),
+    linear-gradient(180deg,
+      rgba(0,0,0,0.45) 0%,
+      transparent 25%,
+      transparent 75%,
+      rgba(0,0,0,0.55) 100%);
+}
+
+/* ── 루트 레이아웃 ── */
 .root{
+  position:relative;z-index:1;
   display:flex;flex-direction:column;
   height:100vh;
-  padding:var(--ph) var(--pw);
-  gap:var(--gap);
-  position:relative;z-index:1;
+  padding:clamp(6px,1.2vh,12px) clamp(12px,2.2vw,24px) clamp(5px,1vh,10px);
+  gap:clamp(5px,0.9vh,9px);
 }
 
-/* ── HEADER ── */
-.header{
+/* ── 상단 브랜드 바 ── */
+.topbar{
   display:flex;align-items:center;justify-content:space-between;
-  flex-shrink:0;height:clamp(32px,5vh,46px);
+  flex-shrink:0;height:clamp(28px,4vh,40px);
 }
-.brand-wordmark{
-  font-size:clamp(11px,1.8vh,16px);font-weight:700;
-  letter-spacing:clamp(4px,0.8vh,8px);text-indent:clamp(4px,0.8vh,8px);
+.brand{display:flex;flex-direction:column;gap:2px}
+.brand-w{
+  font-size:clamp(10px,1.7vh,15px);font-weight:700;
+  letter-spacing:clamp(5px,0.9vh,9px);text-indent:clamp(5px,0.9vh,9px);
   color:var(--red);line-height:1;
 }
-.brand-name{
-  font-size:clamp(6px,0.9vh,9px);letter-spacing:clamp(3px,0.6vh,5px);
-  color:var(--t2);font-weight:300;margin-top:clamp(2px,0.4vh,5px);
-}
-.header-mid{flex:1;display:flex;align-items:center;justify-content:center;gap:10px;padding:0 10px}
-.header-divider{flex:1;height:1px;background:linear-gradient(90deg,transparent,var(--line),transparent)}
-.tesla-status{
-  display:flex;align-items:center;gap:5px;
+.brand-m{font-size:clamp(6px,0.85vh,8px);letter-spacing:clamp(3px,0.5vh,5px);color:var(--t2);font-weight:300}
+.conn{
+  display:flex;align-items:center;gap:6px;
   font-size:clamp(8px,1.1vh,10px);color:var(--t2);
-  white-space:nowrap;cursor:pointer;padding:4px 7px;border-radius:6px;
+  cursor:pointer;padding:4px 10px;border-radius:20px;
+  border:1px solid transparent;transition:border-color .2s;
 }
-.tesla-status:active{background:rgba(255,255,255,.04)}
-.clock-block{text-align:right}
-.clock-time{font-size:clamp(20px,4vh,34px);font-weight:100;letter-spacing:2px;line-height:1}
-.clock-date{font-size:clamp(7px,1vh,10px);color:var(--t2);letter-spacing:1px;margin-top:2px}
+.conn:active{border-color:var(--gb)}
 
-/* ── 3-PANEL ── */
-.cluster{display:flex;gap:var(--gap);flex:1;min-height:0}
-
-/* ── PANEL BASE ── */
-.panel{
-  background:rgba(8,8,10,0.93);border:1px solid var(--line);border-radius:clamp(10px,1.5vh,14px);
-  padding:var(--pp);position:relative;overflow:hidden;
-  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
-}
-.panel::before{
-  content:'';position:absolute;top:0;left:10%;right:10%;height:1px;
-  background:linear-gradient(90deg,transparent,var(--line),transparent);
-}
-.cap{
-  font-size:clamp(6px,0.9vh,8px);letter-spacing:3px;color:var(--t2);
-  text-transform:uppercase;margin-bottom:clamp(2px,0.5vh,4px);
+/* ── 메인 3분할 ── */
+.main{
+  display:flex;gap:clamp(8px,1.6vw,18px);
+  flex:1;min-height:0;align-items:stretch;
 }
 
-/* ── LEFT ── */
-.cl-left{width:27%;display:flex;flex-direction:column;gap:var(--gap);min-width:0}
+/* ── 글라스 카드 ── */
+.card{
+  background:var(--glass);
+  border:1px solid var(--gb);
+  border-radius:clamp(12px,2vh,20px);
+  backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);
+  padding:clamp(12px,2.2vh,22px) clamp(14px,2.4vw,26px);
+  display:flex;flex-direction:column;
+  position:relative;overflow:hidden;
+}
+.card::before{
+  content:'';position:absolute;top:0;left:12%;right:12%;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,0.1),transparent);
+}
 
-.spd-panel{flex-shrink:0;border-color:#282830}
-.spd-panel::before{background:linear-gradient(90deg,transparent,rgba(227,25,55,.5),transparent)}
+/* ── 왼쪽 카드: 속도 + 시계 ── */
+.card-left{width:36%;justify-content:space-between}
+
+/* 속도 */
+.spd-wrap{display:flex;flex-direction:column}
 .spd-num{
-  font-size:clamp(44px,10vh,88px);font-weight:100;
-  letter-spacing:-4px;line-height:.9;margin:2px 0 0;
+  font-size:clamp(62px,14vh,118px);font-weight:100;
+  letter-spacing:-6px;line-height:0.88;color:var(--t0);
+  font-variant-numeric:tabular-nums;
 }
-.spd-unit{font-size:clamp(6px,0.9vh,8px);letter-spacing:4px;color:var(--t2);margin-top:3px}
-.spd-meta{
-  display:flex;align-items:center;justify-content:space-between;
-  margin-top:clamp(5px,1vh,10px);padding-top:clamp(5px,1vh,8px);border-top:1px solid #181818;
+.spd-unit{font-size:clamp(7px,1.1vh,10px);letter-spacing:4px;color:var(--t2);margin-top:4px}
+.spd-row{
+  display:flex;align-items:center;gap:clamp(8px,1.5vw,14px);
+  margin-top:clamp(6px,1.2vh,10px);
 }
-.spd-gear{font-size:clamp(14px,2.5vh,20px);font-weight:200;color:var(--red);min-width:18px;text-align:center}
-.spd-st{font-size:clamp(8px,1.2vh,10px);color:var(--t1)}
-.spd-kw{font-size:clamp(9px,1.4vh,12px);font-weight:200;color:var(--green);min-width:40px;text-align:right}
+.spd-gear{font-size:clamp(13px,2.4vh,20px);font-weight:200;color:var(--red)}
+.spd-st{font-size:clamp(8px,1.2vh,11px);color:var(--t1)}
+.spd-kw{font-size:clamp(9px,1.4vh,13px);font-weight:200;color:var(--green)}
 
-.batt-block{flex:1;min-height:0;display:flex;flex-direction:column}
-#c4-device,#c4-tesla{flex:1;display:flex;flex-direction:column}
-#c4-tesla{display:none}
-.batt-pct{
-  font-size:clamp(28px,6vh,50px);font-weight:100;
-  letter-spacing:-2px;line-height:1;margin-top:3px;
-}
-.batt-range{font-size:clamp(10px,1.6vh,14px);font-weight:200;color:var(--t0);margin-top:4px}
-.batt-st{font-size:clamp(8px,1.1vh,10px);color:var(--t1);margin-top:2px}
-.batt-track{height:3px;background:var(--line);border-radius:2px;overflow:hidden;margin-top:auto;padding-top:0}
-.batt-fill{height:100%;border-radius:2px;transition:width .6s,background .4s}
-.sleeping-badge{
-  position:absolute;top:8px;right:8px;background:rgba(255,255,255,.05);
-  border-radius:4px;padding:2px 6px;font-size:7px;letter-spacing:1px;color:var(--t2);
+/* 구분선 */
+.divider{
+  height:1px;background:rgba(255,255,255,0.07);
+  margin:clamp(8px,1.6vh,14px) 0;flex-shrink:0;
 }
 
-.wx-panel{flex-shrink:0}
-.wx-row{display:flex;align-items:center;gap:8px}
-.wx-ico{font-size:clamp(20px,3.5vh,30px);line-height:1;filter:drop-shadow(0 0 6px rgba(255,200,50,.3))}
-.wx-temp{font-size:clamp(18px,3vh,26px);font-weight:100}
-.wx-desc{font-size:clamp(8px,1.2vh,10px);color:var(--t1);margin-top:1px}
-.wx-detail{
-  display:flex;gap:6px;
-  margin-top:clamp(5px,1vh,8px);padding-top:clamp(5px,1vh,8px);
-  border-top:1px solid #161618;
+/* 시계 */
+.clock-wrap{}
+.clock-time{
+  font-size:clamp(30px,7vh,58px);font-weight:100;
+  letter-spacing:clamp(1px,0.3vw,3px);line-height:1;color:var(--t0);
 }
+.clock-date{font-size:clamp(8px,1.2vh,11px);color:var(--t2);letter-spacing:clamp(1px,0.2vw,2px);margin-top:clamp(3px,0.6vh,6px)}
+
+/* ── 중앙 투명 영역 (테슬라 사진 노출) ── */
+.void{flex:1;pointer-events:none}
+
+/* ── 오른쪽 카드: 날씨 + 배터리 + 위치 ── */
+.card-right{width:33%;justify-content:space-between}
+
+/* 섹션 라벨 */
+.lbl{font-size:clamp(6px,0.85vh,8px);letter-spacing:3px;color:var(--t2);text-transform:uppercase;margin-bottom:clamp(3px,0.6vh,6px)}
+
+/* 날씨 */
+.wx-section{}
+.wx-main{display:flex;align-items:center;gap:clamp(8px,1.4vw,14px)}
+.wx-ico{font-size:clamp(22px,4.5vh,38px);line-height:1}
+.wx-right{}
+.wx-temp{font-size:clamp(26px,5.5vh,44px);font-weight:100;line-height:1}
+.wx-desc{font-size:clamp(9px,1.2vh,11px);color:var(--t1);margin-top:2px}
+.wx-detail{display:flex;gap:clamp(6px,1.2vw,12px);margin-top:clamp(5px,1vh,9px)}
 .wx-d{flex:1}
 .wx-d-lbl{font-size:clamp(6px,0.8vh,7px);letter-spacing:2px;color:var(--t2)}
-.wx-d-val{font-size:clamp(10px,1.6vh,12px);font-weight:200;margin-top:1px}
+.wx-d-val{font-size:clamp(10px,1.6vh,13px);font-weight:200;margin-top:2px;color:var(--t1)}
 
-/* ── CENTER ── */
-.cl-center{
-  flex:1;position:relative;border-radius:clamp(10px,1.5vh,14px);overflow:hidden;
-  background:#04040a;border:1px solid #0e0e16;
-}
+/* 배터리 */
+.batt-section{}
+.batt-main{display:flex;align-items:baseline;gap:6px}
+.batt-num{font-size:clamp(26px,5.2vh,42px);font-weight:100;letter-spacing:-1px;line-height:1}
+.batt-lbl-inline{font-size:clamp(8px,1.1vh,10px);color:var(--t2);letter-spacing:2px}
+.batt-bar-wrap{height:3px;background:rgba(255,255,255,0.1);border-radius:2px;overflow:hidden;margin-top:clamp(5px,0.9vh,8px)}
+.batt-fill{height:100%;border-radius:2px;transition:width .6s,background .4s}
+.batt-sub{font-size:clamp(8px,1.1vh,10px);color:var(--t1);margin-top:3px}
 
-/* 3D car photo — car.jpg를 하단 중심부에 표시, 폰 상태바 부분은 마스크로 숨김 */
-.car3d-wrap{
-  position:absolute;inset:0;pointer-events:none;
-  display:flex;align-items:flex-end;justify-content:center;
-  overflow:hidden;
-}
-.car3d-img{
-  width:100%;height:115%;
-  object-fit:cover;
-  /* car.jpg가 세로 사진(1080×2520)이고 상단에 폰 UI가 있음 */
-  /* object-position으로 차체 부분만 보이게 조정 */
-  object-position:center 30%;
-  opacity:0.55;
-  filter:blur(0.3px) brightness(0.9);
-  transform:translateY(4%);
-  -webkit-mask-image:linear-gradient(to bottom,
-    transparent 0%, rgba(0,0,0,.5) 8%, rgba(0,0,0,.9) 22%,
-    #000 55%, rgba(0,0,0,.7) 80%, transparent 100%);
-  mask-image:linear-gradient(to bottom,
-    transparent 0%, rgba(0,0,0,.5) 8%, rgba(0,0,0,.9) 22%,
-    #000 55%, rgba(0,0,0,.7) 80%, transparent 100%);
-}
+/* 위치 */
+.loc-section{}
+.loc-row{display:flex;flex-direction:column;gap:clamp(2px,0.4vh,4px)}
+.loc-val{font-size:clamp(9px,1.3vh,12px);font-weight:200;color:var(--t1);font-family:'SF Mono',monospace;letter-spacing:0.5px}
 
-/* 도로 + 레인 SVG — 차 이미지 위에 오버레이 */
-.road-svg{
-  position:absolute;inset:0;width:100%;height:100%;display:block;
-}
-.road-line{animation:roadDash var(--road-dur) linear infinite}
-@keyframes roadDash{from{stroke-dashoffset:0}to{stroke-dashoffset:52}}
-.ap-lane-l,.ap-lane-r{opacity:0;transition:opacity .6s}
-.road-svg.ap-on .road-line{
-  stroke:var(--cyan);filter:drop-shadow(0 0 5px var(--cyan));
-}
-.road-svg.ap-on .ap-lane-l,
-.road-svg.ap-on .ap-lane-r{opacity:1}
-
-.ap-badge{
-  position:absolute;bottom:10px;left:50%;transform:translateX(-50%);
-  font-size:clamp(7px,1vh,9px);letter-spacing:4px;color:var(--cyan);
-  text-shadow:0 0 10px var(--cyan);white-space:nowrap;
-  opacity:0;transition:opacity .6s;pointer-events:none;
-}
-.ap-badge.on{opacity:1}
-
-/* ── RIGHT ── */
-.cl-right{width:19%;display:flex;flex-direction:column;gap:var(--gap);min-width:0}
-
-.energy-panel{flex-shrink:0}
-.energy-svg{width:100%;height:clamp(36px,5.5vh,54px);display:block}
-.energy-kw{font-size:clamp(8px,1.1vh,10px);color:var(--t1);text-align:right;margin-top:3px}
-
-.gear-stack-wrap{flex:1;display:flex;flex-direction:column;justify-content:center}
-.gear-stack{display:flex;flex-direction:column;align-items:flex-end;padding-right:12px}
-.gs{
-  font-size:clamp(14px,2.5vh,20px);font-weight:100;color:var(--t2);
-  line-height:1.3;letter-spacing:1px;transition:all .2s;
-}
-.gs.on{
-  font-size:clamp(36px,7.5vh,54px);font-weight:100;color:var(--t0);
-  text-shadow:0 0 20px rgba(255,255,255,.25);line-height:1;
-}
-
-.info-block{flex-shrink:0}
-#c5-gps,#c5-tesla{display:flex;flex-direction:column;gap:clamp(4px,0.8vh,6px)}
-#c5-tesla{display:none}
-.info-row{display:flex;flex-direction:column;gap:1px}
-.info-lbl{font-size:clamp(6px,0.8vh,7px);letter-spacing:2px;color:var(--t2)}
-.info-val{font-size:clamp(12px,2vh,15px);font-weight:200}
-.info-val-sm{font-size:clamp(9px,1.3vh,11px);font-weight:200;color:var(--t1)}
-
-/* ── STATUS ── */
+/* ── 하단 상태 바 ── */
 .strip{
   display:flex;justify-content:space-between;align-items:center;
-  padding-top:clamp(4px,0.8vh,6px);border-top:1px solid #121214;flex-shrink:0;
+  flex-shrink:0;padding-top:clamp(4px,0.7vh,7px);
+  border-top:1px solid rgba(255,255,255,0.06);
 }
 .sitem{display:flex;align-items:center;gap:4px;font-size:clamp(8px,1.1vh,10px);color:var(--t2)}
 .sdot{width:5px;height:5px;border-radius:50%;background:var(--t2);transition:background .3s,box-shadow .3s}
-.sdot.ok{background:var(--green);box-shadow:0 0 5px var(--green)}
-.sdot.err{background:var(--red);box-shadow:0 0 5px var(--red)}
-.sdot.warn{background:var(--amber);box-shadow:0 0 5px var(--amber)}
+.sdot.ok{background:var(--green);box-shadow:0 0 6px var(--green)}
+.sdot.err{background:var(--red);box-shadow:0 0 6px var(--red)}
+.sdot.warn{background:var(--amber);box-shadow:0 0 6px var(--amber)}
 
-/* ── FULLSCREEN ── */
+/* ── 전체화면 버튼 ── */
 .fs-btn{
-  position:fixed;top:8px;right:8px;z-index:900;width:26px;height:26px;border-radius:50%;
-  background:rgba(10,10,12,.85);border:1px solid var(--line);
-  display:flex;align-items:center;justify-content:center;cursor:pointer;
-  font-size:11px;color:var(--t2);backdrop-filter:blur(8px);
+  position:fixed;top:8px;right:8px;z-index:900;
+  width:24px;height:24px;border-radius:50%;
+  background:rgba(0,0,0,0.6);border:1px solid rgba(255,255,255,0.1);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;font-size:11px;color:var(--t2);
 }
 .fs-btn:active{color:var(--red)}
 
-/* ── SETTINGS ── */
-.settings-overlay{position:fixed;inset:0;z-index:800;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);display:none}
+/* ── 설정 패널 ── */
+.settings-overlay{position:fixed;inset:0;z-index:800;background:rgba(0,0,0,0.65);backdrop-filter:blur(4px);display:none}
 .settings-overlay.show{display:block}
 .settings-panel{
   position:absolute;right:0;top:0;bottom:0;width:320px;
-  background:var(--bg0);border-left:1px solid var(--line);
-  display:flex;flex-direction:column;animation:slideIn .25s ease;
+  background:#080808;border-left:1px solid rgba(255,255,255,0.08);
+  display:flex;flex-direction:column;animation:slideIn .22s ease;
 }
 @keyframes slideIn{from{transform:translateX(100%)}to{transform:translateX(0)}}
-.sp-head{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid var(--line)}
-.sp-title{font-size:12px;letter-spacing:2px;color:var(--t1)}
-.sp-close{width:26px;height:26px;border-radius:50%;background:var(--bg2);border:none;color:var(--t1);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.sp-head{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid rgba(255,255,255,0.06)}
+.sp-title{font-size:12px;letter-spacing:2px;color:rgba(255,255,255,0.4)}
+.sp-close{width:26px;height:26px;border-radius:50%;background:#161616;border:none;color:rgba(255,255,255,0.4);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center}
 .sp-close:active{color:var(--red)}
 .sp-body{flex:1;overflow-y:auto;padding:18px}
 .sp-section{margin-bottom:20px}
-.sp-label{font-size:9px;letter-spacing:2px;color:var(--t2);margin-bottom:10px}
-.sp-status{display:flex;align-items:center;gap:8px;padding:11px 13px;border-radius:10px;background:var(--bg2);margin-bottom:14px;font-size:12px}
-.sp-btn{width:100%;padding:11px;border-radius:10px;border:1px solid var(--line);background:var(--bg2);color:var(--t0);font-size:13px;letter-spacing:.5px;cursor:pointer;text-align:center;margin-bottom:8px;transition:background .15s}
-.sp-btn:active,.sp-btn:hover{background:var(--bg1)}
+.sp-lbl{font-size:9px;letter-spacing:2px;color:rgba(255,255,255,0.25);margin-bottom:10px}
+.sp-status{display:flex;align-items:center;gap:8px;padding:11px 13px;border-radius:10px;background:#111;margin-bottom:14px;font-size:12px}
+.sp-btn{width:100%;padding:11px;border-radius:10px;border:1px solid #1e1e1e;background:#111;color:#fff;font-size:13px;letter-spacing:.5px;cursor:pointer;text-align:center;margin-bottom:8px;transition:background .15s}
+.sp-btn:active{background:#1a1a1a}
 .sp-btn-red{background:var(--red);border-color:var(--red)}
-.sp-btn-red:active,.sp-btn-red:hover{background:#c41530}
-.sp-input{width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--bg2);color:var(--t0);font-size:12px;margin-bottom:8px;outline:none;font-family:monospace}
+.sp-btn-red:active{background:#c41530}
+.sp-input{width:100%;padding:10px 12px;border-radius:10px;border:1px solid #1e1e1e;background:#111;color:#fff;font-size:12px;margin-bottom:8px;outline:none;font-family:monospace}
 .sp-input:focus{border-color:var(--red)}
 .sp-err{font-size:11px;color:var(--red);margin-top:6px;display:none}
 .sp-err.show{display:block}
-.sp-note{font-size:10px;color:var(--t2);line-height:1.6;margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
+.sp-note{font-size:10px;color:rgba(255,255,255,0.2);line-height:1.6;margin-top:12px;padding-top:12px;border-top:1px solid #1a1a1a}
 
-/* ── GPS OVERLAY ── */
-.gps-ov{position:fixed;inset:0;z-index:700;background:rgba(7,7,9,.96);display:none;flex-direction:column;align-items:center;justify-content:center;gap:12px}
+/* ── GPS 오버레이 ── */
+.gps-ov{position:fixed;inset:0;z-index:700;background:rgba(0,0,0,.95);display:none;flex-direction:column;align-items:center;justify-content:center;gap:12px}
 .gps-ov.show{display:flex}
 .gps-ov-title{font-size:14px;font-weight:300;letter-spacing:2px}
 .gps-ov-sub{font-size:11px;color:var(--t1);text-align:center;line-height:1.9;max-width:260px}
@@ -259,10 +219,12 @@ html,body{
 </head>
 <body>
 
+<div class="bg"></div>
 <div class="fs-btn" id="js-fs">⛶</div>
 
+<!-- GPS -->
 <div class="gps-ov" id="js-gps-ov">
-  <svg style="height:28px;fill:#E31937;filter:drop-shadow(0 0 10px rgba(227,25,55,.75))" viewBox="-2 -2 104 167">
+  <svg style="height:28px;fill:#E31937" viewBox="-2 -2 104 167">
     <path d="M 50,0 C 65,1 84,5 100,13 C 88,21 73,24 60,25 L 60,163 L 40,163 L 40,25 C 27,24 12,21 0,13 C 16,5 35,1 50,0 Z"/>
   </svg>
   <div class="gps-ov-title">위치 권한 필요</div>
@@ -270,6 +232,7 @@ html,body{
   <button class="gps-ov-btn" onclick="$('js-gps-ov').classList.remove('show')">닫기</button>
 </div>
 
+<!-- 설정 -->
 <div class="settings-overlay" id="js-settings-ov" onclick="closeSP(event)">
   <div class="settings-panel">
     <div class="sp-head">
@@ -282,98 +245,84 @@ html,body{
         <span id="sp-status-txt">연결 안됨</span>
       </div>
       <div id="sp-connected" style="display:none">
-        <div class="sp-label">연결된 차량</div>
+        <div class="sp-lbl">연결된 차량</div>
         <div style="font-size:18px;font-weight:200;margin-bottom:14px" id="sp-car-name">—</div>
         <button class="sp-btn" onclick="disconnect()" style="color:var(--red);border-color:var(--red)">연결 해제</button>
       </div>
       <div id="sp-disconnected">
         <div class="sp-section">
-          <div class="sp-label">Tesla Fleet API 연결</div>
-          <div style="font-size:10px;color:var(--t2);line-height:1.8;margin-bottom:12px">MyTeslamate 스크립트로 발급받은<br>토큰과 앱 정보를 입력하세요</div>
-          <div style="font-size:9px;letter-spacing:1px;color:var(--t2);margin-bottom:4px">CLIENT ID</div>
+          <div class="sp-lbl">Tesla Fleet API 연결</div>
+          <div style="font-size:10px;color:rgba(255,255,255,0.25);line-height:1.8;margin-bottom:12px">MyTeslamate 스크립트로 발급받은<br>토큰과 앱 정보를 입력하세요</div>
+          <div style="font-size:9px;letter-spacing:1px;color:rgba(255,255,255,0.25);margin-bottom:4px">CLIENT ID</div>
           <input class="sp-input" id="sp-cid" placeholder="9633ab40-xxxx-xxxx-xxxx-xxxxxxxxxxxx" autocomplete="off" spellcheck="false"/>
-          <div style="font-size:9px;letter-spacing:1px;color:var(--t2);margin-bottom:4px;margin-top:8px">CLIENT SECRET</div>
-          <input class="sp-input" id="sp-csec" type="password" placeholder="Client Secret 입력" autocomplete="off"/>
-          <div style="font-size:9px;letter-spacing:1px;color:var(--t2);margin-bottom:4px;margin-top:8px">REFRESH TOKEN</div>
+          <div style="font-size:9px;letter-spacing:1px;color:rgba(255,255,255,0.25);margin-bottom:4px;margin-top:8px">CLIENT SECRET</div>
+          <input class="sp-input" id="sp-csec" type="password" placeholder="Client Secret" autocomplete="off"/>
+          <div style="font-size:9px;letter-spacing:1px;color:rgba(255,255,255,0.25);margin-bottom:4px;margin-top:8px">REFRESH TOKEN</div>
           <input class="sp-input" id="sp-rtoken" placeholder="NA_xxxxx..." autocomplete="off" spellcheck="false"/>
-          <div style="font-size:9px;letter-spacing:1px;color:var(--t2);margin-bottom:4px;margin-top:8px">ACCESS TOKEN <span style="color:#252525">(선택)</span></div>
+          <div style="font-size:9px;letter-spacing:1px;color:rgba(255,255,255,0.25);margin-bottom:4px;margin-top:8px">ACCESS TOKEN <span style="opacity:.5">(선택)</span></div>
           <input class="sp-input" id="sp-atoken" placeholder="eyJhbGci..." autocomplete="off" spellcheck="false"/>
           <button class="sp-btn sp-btn-red" style="margin-top:12px" onclick="connectRefresh()">연결하기</button>
           <div class="sp-err" id="sp-err2"></div>
         </div>
-        <div class="sp-note">⚠ 입력 정보는 이 기기에만 저장됩니다.<br>외부 서버로 전송되지 않습니다.</div>
+        <div class="sp-note">⚠ 입력 정보는 이 기기에만 저장됩니다.</div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- MAIN -->
+<!-- DASHBOARD -->
 <div class="root">
 
-  <div class="header">
-    <div>
-      <div class="brand-wordmark">TESLA</div>
-      <div class="brand-name">MODEL Y</div>
+  <!-- 상단 바 -->
+  <div class="topbar">
+    <div class="brand">
+      <div class="brand-w">TESLA</div>
+      <div class="brand-m">MODEL Y</div>
     </div>
-    <div class="header-mid">
-      <div class="header-divider"></div>
-      <div class="tesla-status" id="hdr-tesla" onclick="toggleSettings()">
-        <div class="sdot" id="hdr-dot"></div>
-        <span id="hdr-tesla-txt">Tesla 연결</span>
-        <span style="font-size:12px;color:var(--t2);margin-left:3px">⚙</span>
-      </div>
-      <div class="header-divider"></div>
-    </div>
-    <div class="clock-block">
-      <div class="clock-time" id="js-clk">--:--</div>
-      <div class="clock-date" id="js-dt">----.--.-- (--)</div>
+    <div class="conn" id="hdr-tesla" onclick="toggleSettings()">
+      <div class="sdot" id="hdr-dot"></div>
+      <span id="hdr-tesla-txt">Tesla 연결</span>
+      <span style="font-size:12px;opacity:.5;margin-left:2px">⚙</span>
     </div>
   </div>
 
-  <div class="cluster">
+  <!-- 메인 -->
+  <div class="main">
 
-    <!-- ── LEFT ── -->
-    <div class="cl-left">
+    <!-- 왼쪽: 속도 + 시계 -->
+    <div class="card card-left">
 
-      <!-- 속도 -->
-      <div class="panel spd-panel">
-        <div class="cap">속도</div>
+      <div class="spd-wrap">
         <div class="spd-num" id="js-spd">0</div>
         <div class="spd-unit">KM/H</div>
-        <div class="spd-meta">
+        <div class="spd-row">
           <span class="spd-gear" id="js-gear">P</span>
           <span class="spd-st" id="js-spd-st">정지</span>
           <span class="spd-kw" id="js-pwr">— kW</span>
         </div>
       </div>
 
-      <!-- 배터리 -->
-      <div class="batt-block">
-        <div id="c4-device" class="panel" style="flex:1">
-          <div class="cap">기기 배터리</div>
-          <div class="batt-pct" id="js-bat">--%</div>
-          <div class="batt-st" id="js-bst">확인중</div>
-          <div class="batt-track" style="margin-top:auto">
-            <div class="batt-fill" id="js-bar" style="width:0%"></div>
-          </div>
-        </div>
-        <div id="c4-tesla" class="panel" style="flex:1">
-          <div class="sleeping-badge" id="tesla-sleep-badge" style="display:none">잠자는 중</div>
-          <div class="cap">차량 배터리</div>
-          <div class="batt-pct" id="tesla-batt-pct">--%</div>
-          <div class="batt-range" id="tesla-batt-range">-- km</div>
-          <div class="batt-st" id="tesla-batt-st">확인중</div>
-          <div class="batt-track" style="margin-top:auto">
-            <div class="batt-fill" id="tesla-batt-bar" style="width:0%"></div>
-          </div>
-        </div>
+      <div class="divider"></div>
+
+      <div class="clock-wrap">
+        <div class="clock-time" id="js-clk">--:--</div>
+        <div class="clock-date" id="js-dt">----.--.-- (--)</div>
       </div>
 
+    </div>
+
+    <!-- 중앙: 투명 (테슬라 사진 노출) -->
+    <div class="void"></div>
+
+    <!-- 오른쪽: 날씨 + 배터리 + 위치 -->
+    <div class="card card-right">
+
       <!-- 날씨 -->
-      <div class="panel wx-panel">
-        <div class="wx-row">
+      <div class="wx-section">
+        <div class="lbl">날씨</div>
+        <div class="wx-main">
           <div class="wx-ico" id="js-wi">—</div>
-          <div>
+          <div class="wx-right">
             <div class="wx-temp" id="js-tmp">--°</div>
             <div class="wx-desc" id="js-dsc">위치 확인중</div>
           </div>
@@ -385,136 +334,87 @@ html,body{
         </div>
       </div>
 
-    </div><!-- /cl-left -->
-
-    <!-- ── CENTER: 3D 테슬라 + 도로 ── -->
-    <div class="cl-center">
-
-      <!-- 3D 테슬라 사진 배경 -->
-      <div class="car3d-wrap">
-        <img class="car3d-img" src="car.jpg" alt="" onerror="this.style.display='none'">
-      </div>
-
-      <!-- 도로 + 레인 SVG (car 위에 오버레이) -->
-      <svg class="road-svg" id="js-road-svg"
-           viewBox="0 0 300 580" preserveAspectRatio="xMidYMid slice">
-        <defs>
-          <linearGradient id="rGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="#06060e"/>
-            <stop offset="100%" stop-color="#10101a"/>
-          </linearGradient>
-          <radialGradient id="hGlow" cx="50%" cy="0%" r="55%">
-            <stop offset="0%" stop-color="rgba(20,60,180,0.12)"/>
-            <stop offset="100%" stop-color="transparent"/>
-          </radialGradient>
-        </defs>
-
-        <!-- 하늘 (상단) -->
-        <rect width="300" height="260" fill="#04040c"/>
-        <rect width="300" height="200" fill="url(#hGlow)"/>
-
-        <!-- 도로면 (하단 사다리꼴) — 반투명하게 car.jpg 위에 올림 -->
-        <path d="M 14,580 L 286,580 L 180,200 L 120,200 Z" fill="rgba(10,10,20,0.72)"/>
-
-        <!-- 도로 경계선 -->
-        <line x1="14" y1="580" x2="120" y2="200" stroke="rgba(255,255,255,.28)" stroke-width="2"/>
-        <line x1="286" y1="580" x2="180" y2="200" stroke="rgba(255,255,255,.28)" stroke-width="2"/>
-
-        <!-- AP 하이라이트 밴드 -->
-        <path class="ap-lane-l" d="M 14,580 L 108,580 L 130,200 L 120,200 Z" fill="rgba(0,220,255,0.10)"/>
-        <path class="ap-lane-r" d="M 286,580 L 192,580 L 170,200 L 180,200 Z" fill="rgba(0,220,255,0.10)"/>
-
-        <!-- 차선 (애니메이션 점선) -->
-        <line class="road-line"
-              x1="108" y1="580" x2="132" y2="200"
-              stroke="rgba(255,255,255,.6)" stroke-width="1.8"
-              stroke-dasharray="28 24" stroke-linecap="round"/>
-        <line class="road-line"
-              x1="192" y1="580" x2="168" y2="200"
-              stroke="rgba(255,255,255,.6)" stroke-width="1.8"
-              stroke-dasharray="28 24" stroke-linecap="round"/>
-
-        <!-- 지평선 글로우 -->
-        <line x1="120" y1="200" x2="180" y2="200"
-              stroke="rgba(30,90,255,.3)" stroke-width="1.5"/>
-      </svg>
-
-      <div class="ap-badge" id="js-ap-badge">AUTOPILOT</div>
-    </div><!-- /cl-center -->
-
-    <!-- ── RIGHT ── -->
-    <div class="cl-right">
-
-      <!-- 에너지 스파크라인 -->
-      <div class="panel energy-panel">
-        <div class="cap">ENERGY</div>
-        <svg id="js-energy-svg" class="energy-svg"
-             viewBox="0 0 160 54" preserveAspectRatio="none">
-          <line class="energy-zero" x1="0" y1="38" x2="160" y2="38"
-                stroke="rgba(255,255,255,.1)" stroke-width=".8"/>
-          <polyline class="energy-line" points=""
-                    fill="none" stroke="var(--green)" stroke-width="1.6"
-                    stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-        <div class="energy-kw" id="js-pwr-label">— kW</div>
-      </div>
-
-      <!-- 기어 스택 D/N/R/P -->
-      <div class="gear-stack-wrap">
-        <div class="gear-stack">
-          <div class="gs" id="gs-D">D</div>
-          <div class="gs" id="gs-N">N</div>
-          <div class="gs" id="gs-R">R</div>
-          <div class="gs on" id="gs-P">P</div>
+      <!-- 배터리 (기기/Tesla 전환) -->
+      <div class="batt-section">
+        <!-- 기기 배터리 -->
+        <div id="c4-device">
+          <div class="lbl">기기 배터리</div>
+          <div class="batt-main">
+            <div class="batt-num" id="js-bat">--%</div>
+          </div>
+          <div class="batt-bar-wrap">
+            <div class="batt-fill" id="js-bar" style="width:0%"></div>
+          </div>
+          <div class="batt-sub" id="js-bst">확인중</div>
+        </div>
+        <!-- Tesla 배터리 -->
+        <div id="c4-tesla" style="display:none">
+          <div class="lbl">차량 배터리</div>
+          <div class="batt-main">
+            <div class="batt-num" id="tesla-batt-pct">--%</div>
+            <div class="batt-lbl-inline">SOC</div>
+          </div>
+          <div class="batt-bar-wrap">
+            <div class="batt-fill" id="tesla-batt-bar" style="width:0%"></div>
+          </div>
+          <div class="batt-sub" id="tesla-batt-range">-- km 주행가능</div>
+          <div class="batt-sub" id="tesla-batt-st" style="margin-top:1px;font-size:clamp(7px,1vh,9px)"></div>
         </div>
       </div>
 
-      <!-- 차량 정보 / GPS -->
-      <div class="info-block panel">
+      <!-- 위치 -->
+      <div class="loc-section">
+        <!-- GPS (Tesla 미연결) -->
         <div id="c5-gps">
-          <div class="cap">위치</div>
-          <div class="info-row"><div class="info-lbl">위도</div><div class="info-val-sm" id="js-lat">--</div></div>
-          <div class="info-row"><div class="info-lbl">경도</div><div class="info-val-sm" id="js-lon">--</div></div>
-          <div class="info-row"><div class="info-lbl">정확도</div><div class="info-val-sm" id="js-acc">--</div></div>
+          <div class="lbl">현재 위치</div>
+          <div class="loc-row">
+            <div class="loc-val" id="js-lat">--</div>
+            <div class="loc-val" id="js-lon">--</div>
+            <div class="loc-val" id="js-acc" style="font-size:clamp(8px,1.1vh,10px);opacity:.6">--</div>
+          </div>
         </div>
-        <div id="c5-tesla">
-          <div class="cap">차량 정보</div>
-          <div class="info-row"><div class="info-lbl">실내</div><div class="info-val" id="tesla-cabin">--°</div></div>
-          <div class="info-row"><div class="info-lbl">외부</div><div class="info-val" id="tesla-outside">--°</div></div>
-          <div class="info-row"><div class="info-lbl">주행거리</div><div class="info-val-sm" id="tesla-odo">-- km</div></div>
-          <div class="info-row"><div class="info-lbl">잠금</div><div class="info-val-sm" id="tesla-lock">--</div></div>
+        <!-- Tesla 차량정보 (연결 후) -->
+        <div id="c5-tesla" style="display:none">
+          <div class="lbl">차량 정보</div>
+          <div class="loc-row">
+            <div class="loc-val">실내 <span id="tesla-cabin" style="color:#fff">--°</span></div>
+            <div class="loc-val">외부 <span id="tesla-outside" style="color:#fff">--°</span></div>
+            <div class="loc-val"><span id="tesla-lock">--</span></div>
+            <div class="loc-val" id="tesla-odo" style="font-size:clamp(8px,1.1vh,10px);opacity:.6">-- km</div>
+          </div>
         </div>
       </div>
 
-    </div><!-- /cl-right -->
+    </div><!-- /card-right -->
 
-  </div><!-- /cluster -->
+  </div><!-- /main -->
 
+  <!-- 하단 상태 -->
   <div class="strip">
     <div class="sitem"><div class="sdot" id="js-ndot"></div><span id="js-nst">네트워크</span></div>
     <div class="sitem"><div class="sdot" id="js-gdot"></div><span id="js-gst">GPS</span></div>
-    <div class="sitem" id="js-upd" style="font-size:10px;color:var(--t2)">—</div>
+    <div class="sitem" id="js-upd" style="font-size:clamp(8px,1.1vh,10px);color:var(--t2)">—</div>
   </div>
 
-</div>
+</div><!-- /root -->
 
 <script>
-/* ════════════════════════════════════════
+/* ════════════════════════════
    STATE
-════════════════════════════════════════ */
+════════════════════════════ */
 const TS={
   access:ls('t_access')||'',refresh:ls('t_refresh')||'',
   expiry:+ls('t_expiry')||0,vid:ls('t_vid')||'',name:ls('t_name')||'',
-  clientId:ls('t_cid')||'',clientSec:ls('t_csec')||'',pkce:'',
+  clientId:ls('t_cid')||'',clientSec:ls('t_csec')||'',
 };
 const PROXY='https://corsproxy.io/?';
 const AUTH='https://fleet-auth.prd.vn.cloud.tesla.com/oauth2/v3';
 const TAPI='https://fleet-api.prd.na.vn.cloud.tesla.com';
-let teslaTimer=null, isTeslaConnected=false;
+let teslaTimer=null,isTeslaConnected=false,pollInterval=30000;
 
-/* ════════════════════════════════════════
+/* ════════════════════════════
    UTILS
-════════════════════════════════════════ */
+════════════════════════════ */
 function $(id){return document.getElementById(id)}
 function set(id,v){const e=$(id);if(e)e.textContent=v}
 function dot(id,cls){const e=$(id);if(e)e.className='sdot '+cls}
@@ -522,21 +422,18 @@ function pad(n){return String(n).padStart(2,'0')}
 function ls(k){return localStorage.getItem(k)}
 function lsSet(k,v){localStorage.setItem(k,v)}
 
-/* ════════════════════════════════════════
+/* ════════════════════════════
    FULLSCREEN
-════════════════════════════════════════ */
+════════════════════════════ */
 $('js-fs').addEventListener('click',toggleFS);
-document.addEventListener('click',function autoFS(e){
-  if(e.target===$('js-fs'))return;
-  tryFS();document.removeEventListener('click',autoFS);
-},{once:true,capture:true});
+document.addEventListener('click',function a(e){if(e.target===$('js-fs'))return;tryFS();document.removeEventListener('click',a);},{once:true,capture:true});
 function tryFS(){const el=document.documentElement;(el.requestFullscreen||el.webkitRequestFullscreen||el.mozRequestFullScreen)?.call(el)}
 function toggleFS(){if(!document.fullscreenElement&&!document.webkitFullscreenElement)tryFS();else(document.exitFullscreen||document.webkitExitFullscreen)?.call(document)}
 document.addEventListener('fullscreenchange',()=>{$('js-fs').textContent=document.fullscreenElement?'✕':'⛶'});
 
-/* ════════════════════════════════════════
+/* ════════════════════════════
    CLOCK
-════════════════════════════════════════ */
+════════════════════════════ */
 const DAYS=['일','월','화','수','목','금','토'];
 function tick(){
   const d=new Date();
@@ -545,48 +442,15 @@ function tick(){
 }
 setInterval(tick,1000);tick();
 
-/* ════════════════════════════════════════
-   SPEED / GEAR / ENERGY
-════════════════════════════════════════ */
-function setSpeed(kmh){
-  set('js-spd',kmh);
-  const dur=kmh<3?'2.5s':kmh<30?'0.9s':kmh<60?'0.45s':kmh<100?'0.28s':'0.16s';
-  document.documentElement.style.setProperty('--road-dur',dur);
-}
+/* ════════════════════════════
+   SPEED / GEAR
+════════════════════════════ */
+function setSpeed(kmh){set('js-spd',kmh)}
+function setGear(g){set('js-gear',g||'P')}
 
-function setGear(g){
-  ['D','N','R','P'].forEach(x=>{const el=$('gs-'+x);if(el)el.className='gs'+(x===g?' on':'')});
-  set('js-gear',g||'P');
-}
-
-const energyHist=[];
-const E_MAX=60;
-function pushEnergy(kw){
-  energyHist.push(kw);
-  if(energyHist.length>E_MAX)energyHist.shift();
-  drawSparkline();
-}
-function drawSparkline(){
-  const svg=$('js-energy-svg');
-  if(!svg||energyHist.length<2)return;
-  const W=160,H=54,minV=-80,maxV=200;
-  const pts=energyHist.map((v,i)=>{
-    const x=(i/(E_MAX-1))*W;
-    const y=H-Math.max(0,Math.min(1,(v-minV)/(maxV-minV)))*H;
-    return x.toFixed(1)+','+y.toFixed(1);
-  }).join(' ');
-  const poly=svg.querySelector('.energy-line');
-  if(poly)poly.setAttribute('points',pts);
-  const zY=(H-Math.max(0,Math.min(1,(0-minV)/(maxV-minV)))*H).toFixed(1);
-  const zero=svg.querySelector('.energy-zero');
-  if(zero){zero.setAttribute('y1',zY);zero.setAttribute('y2',zY);}
-  const lat=energyHist[energyHist.length-1];
-  if(poly)poly.setAttribute('stroke',lat<0?'var(--cyan)':lat>80?'var(--amber)':'var(--green)');
-}
-
-/* ════════════════════════════════════════
+/* ════════════════════════════
    GPS
-════════════════════════════════════════ */
+════════════════════════════ */
 let wxTs=0,prevLat=null,prevLon=null,prevGpsT=null;
 function startGPS(){
   $('js-gps-ov').classList.remove('show');
@@ -595,22 +459,16 @@ function startGPS(){
 }
 function onGPS(p){
   $('js-gps-ov').classList.remove('show');
-  const{latitude:la,longitude:lo,accuracy:ac,speed:sp}=p.coords;
-  const ts=p.timestamp;
+  const{latitude:la,longitude:lo,accuracy:ac,speed:sp}=p.coords;const ts=p.timestamp;
   let kmh=0;
   if(sp!=null&&sp>=0){kmh=Math.round(sp*3.6);}
-  else if(prevLat!==null){
-    const dt=(ts-prevGpsT)/1000;
-    if(dt>0.5&&dt<8){const d=haversine(prevLat,prevLon,la,lo);const c=(d/dt)*3.6;kmh=c<250?Math.round(c):0;}
-  }
+  else if(prevLat!==null){const dt=(ts-prevGpsT)/1000;if(dt>0.5&&dt<8){const d=haversine(prevLat,prevLon,la,lo);const c=(d/dt)*3.6;kmh=c<250?Math.round(c):0;}}
   prevLat=la;prevLon=lo;prevGpsT=ts;
   if(!isTeslaConnected){setSpeed(kmh);set('js-spd-st',kmh>2?'주행중':'정지');}
   set('js-lat',la.toFixed(5)+'°N');set('js-lon',lo.toFixed(5)+'°E');set('js-acc','±'+Math.round(ac)+'m');
   dot('js-gdot','ok');set('js-gst','GPS 활성');
-  const now=Date.now();
-  if(now-wxTs>600000){wxTs=now;fetchWeather(la,lo);}
-  const t=new Date();
-  set('js-upd',pad(t.getHours())+':'+pad(t.getMinutes())+':'+pad(t.getSeconds())+' 업데이트');
+  const now=Date.now();if(now-wxTs>600000){wxTs=now;fetchWeather(la,lo);}
+  const t=new Date();set('js-upd',pad(t.getHours())+':'+pad(t.getMinutes())+':'+pad(t.getSeconds())+' 업데이트');
 }
 function onGPSErr(e){
   dot('js-gdot','warn');set('js-gst',e.code===1?'GPS 차단됨':'GPS 오류');
@@ -624,9 +482,9 @@ function haversine(φ1,λ1,φ2,λ2){
 }
 startGPS();
 
-/* ════════════════════════════════════════
+/* ════════════════════════════
    WEATHER
-════════════════════════════════════════ */
+════════════════════════════ */
 const WI={0:'☀️',1:'🌤️',2:'⛅',3:'☁️',45:'🌫️',48:'🌫️',51:'🌦️',53:'🌦️',55:'🌧️',61:'🌧️',63:'🌧️',65:'🌨️',71:'❄️',73:'❄️',75:'❄️',80:'🌦️',81:'🌦️',82:'⛈️',95:'⛈️',99:'⛈️'};
 const WD={0:'맑음',1:'대체로 맑음',2:'구름 조금',3:'흐림',45:'안개',48:'안개',51:'이슬비',53:'이슬비',55:'이슬비',61:'비',63:'비',65:'강한 비',71:'눈',73:'눈',75:'강한 눈',80:'소나기',81:'소나기',82:'강한 소나기',95:'뇌우',99:'뇌우'};
 async function fetchWeather(la,lo){
@@ -639,9 +497,9 @@ async function fetchWeather(la,lo){
   }catch{set('js-dsc','날씨 오류');}
 }
 
-/* ════════════════════════════════════════
+/* ════════════════════════════
    DEVICE BATTERY
-════════════════════════════════════════ */
+════════════════════════════ */
 navigator.getBattery?.().then(b=>{
   function upd(){
     const p=Math.round(b.level*100);
@@ -653,18 +511,18 @@ navigator.getBattery?.().then(b=>{
   upd();b.addEventListener('levelchange',upd);b.addEventListener('chargingchange',upd);
 });
 
-/* ════════════════════════════════════════
+/* ════════════════════════════
    NETWORK / WAKE LOCK
-════════════════════════════════════════ */
+════════════════════════════ */
 function netUpd(){if(navigator.onLine){dot('js-ndot','ok');set('js-nst','온라인')}else{dot('js-ndot','err');set('js-nst','오프라인')}}
 window.addEventListener('online',netUpd);window.addEventListener('offline',netUpd);netUpd();
 async function reqWake(){try{if('wakeLock'in navigator)await navigator.wakeLock.request('screen')}catch{}}
 reqWake();
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')reqWake();});
 
-/* ════════════════════════════════════════
+/* ════════════════════════════
    TESLA API
-════════════════════════════════════════ */
+════════════════════════════ */
 async function connectRefresh(){
   const cid=$('sp-cid').value.trim(),csec=$('sp-csec').value.trim();
   const rt=$('sp-rtoken').value.trim(),at=$('sp-atoken').value.trim();
@@ -676,8 +534,7 @@ async function connectRefresh(){
     lsSet('t_cid',cid);lsSet('t_csec',csec);lsSet('t_refresh',rt);
     if(at){TS.access=at;TS.expiry=Date.now()+7*3600*1000;lsSet('t_access',at);lsSet('t_expiry',TS.expiry);}
     else await renewToken();
-    await fetchVehicles();
-    onConnected();
+    await fetchVehicles();onConnected();
   }catch(e){showErr('sp-err2','오류: '+(e.message||String(e)));console.error('[Tesla]',e);}
 }
 async function renewToken(){
@@ -685,7 +542,7 @@ async function renewToken(){
   const res=await fetch(PROXY+AUTH+'/token',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:body.toString()});
   if(!res.ok)throw new Error('토큰 갱신 실패 HTTP '+res.status);
   const data=await res.json();
-  if(!data.access_token)throw new Error('access_token 없음: '+JSON.stringify(data));
+  if(!data.access_token)throw new Error('access_token 없음');
   TS.access=data.access_token;TS.refresh=data.refresh_token||TS.refresh;
   TS.expiry=Date.now()+((data.expires_in||28800)-300)*1000;
   lsSet('t_access',TS.access);lsSet('t_refresh',TS.refresh);lsSet('t_expiry',TS.expiry);
@@ -700,70 +557,41 @@ async function fetchVehicles(){
   const v=data.response[0];TS.vid=v.id_s;TS.name=v.display_name||'Model Y';
   lsSet('t_vid',TS.vid);lsSet('t_name',TS.name);
 }
-/* 주행 중 10초 / 정차 30초 동적 폴링 */
-let pollInterval=30000;
+async function wakeVehicle(){
+  try{const token=await getToken();await fetch(PROXY+TAPI+`/api/1/vehicles/${TS.vid}/wake_up`,{method:'POST',headers:{Authorization:'Bearer '+token}});}catch{}
+}
 function adjustPoll(isDriving){
   const target=isDriving?10000:30000;
   if(pollInterval===target)return;
   pollInterval=target;
   if(teslaTimer){clearInterval(teslaTimer);teslaTimer=setInterval(fetchVehicleData,pollInterval);}
 }
-
-async function wakeVehicle(){
-  try{
-    const token=await getToken();
-    await fetch(PROXY+TAPI+`/api/1/vehicles/${TS.vid}/wake_up`,{method:'POST',headers:{Authorization:'Bearer '+token}});
-  }catch{}
-}
-
 async function fetchVehicleData(){
   if(!TS.vid)return;
   try{
     const token=await getToken();
-    /* endpoints 파라미터 필수: 누락 시 drive_state 등 일부 필드 안 옴 */
     const ep=encodeURIComponent('drive_state;charge_state;climate_state;vehicle_state');
-    const res=await fetch(PROXY+TAPI+`/api/1/vehicles/${TS.vid}/vehicle_data?endpoints=${ep}`,
-      {headers:{Authorization:'Bearer '+token}});
-
+    const res=await fetch(PROXY+TAPI+`/api/1/vehicles/${TS.vid}/vehicle_data?endpoints=${ep}`,{headers:{Authorization:'Bearer '+token}});
     if(!res.ok){
-      /* 408/503 = 차량 잠자는 중 → wake_up 시도 */
-      if(res.status===408||res.status===503){
-        dot('hdr-dot','warn');set('hdr-tesla-txt',(TS.name||'Tesla')+' 절전중');
-        wakeVehicle();
-      } else {
-        dot('hdr-dot','err');set('hdr-tesla-txt','API 오류 '+res.status);
-      }
+      if(res.status===408||res.status===503){dot('hdr-dot','warn');set('hdr-tesla-txt',(TS.name||'Tesla')+' 절전중');wakeVehicle();}
+      else{dot('hdr-dot','err');set('hdr-tesla-txt','API 오류 '+res.status);}
       return;
     }
-
     const data=await res.json();
-    if(!data.response){
-      dot('hdr-dot','warn');set('hdr-tesla-txt',(TS.name||'Tesla')+' 응답없음');
-      return;
-    }
-
+    if(!data.response){dot('hdr-dot','warn');set('hdr-tesla-txt',(TS.name||'Tesla')+' 응답없음');return;}
     dot('hdr-dot','ok');set('hdr-tesla-txt',TS.name||'연결됨');
     updateTeslaCards(data.response);
-
-    /* 주행 여부에 따라 폴링 주기 조정 */
-    const spd=data.response?.drive_state?.speed??0;
-    adjustPoll(spd>0);
-
-  }catch(e){
-    console.warn('Tesla 데이터 오류:',e.message);
-    dot('hdr-dot','warn');set('hdr-tesla-txt','연결 재시도중');
-  }
+    adjustPoll((data.response?.drive_state?.speed??0)>0);
+  }catch(e){console.warn('Tesla:',e.message);dot('hdr-dot','warn');set('hdr-tesla-txt','재시도중');}
 }
 function updateTeslaCards(v){
   if(!v)return;
-  const sleeping=v.state==='asleep';
-  const badge=$('tesla-sleep-badge');if(badge)badge.style.display=sleeping?'block':'none';
   const cs=v.charge_state;
   if(cs){
     const pct=cs.battery_level??0,range=Math.round((cs.battery_range||0)*1.60934);
     set('tesla-batt-pct',pct+'%');set('tesla-batt-range',range+'km 주행가능');
     const chg=cs.charging_state;
-    set('tesla-batt-st',chg==='Charging'?`충전중 (+${Math.round((cs.charge_rate||0)*1.60934)}km/h)`:chg==='Complete'?'충전 완료 ✓':chg==='Disconnected'?'충전기 미연결':chg||'');
+    set('tesla-batt-st',chg==='Charging'?`충전중 +${Math.round((cs.charge_rate||0)*1.60934)}km/h`:chg==='Complete'?'충전완료 ✓':chg==='Disconnected'?'충전기 미연결':'');
     const bar=$('tesla-batt-bar');
     if(bar){bar.style.width=pct+'%';bar.style.background=pct>50?'#2ECC71':pct>20?'#E67E22':'#E31937';}
   }
@@ -777,14 +605,10 @@ function updateTeslaCards(v){
     if(ds.speed!=null){const kmh=Math.round(ds.speed*1.60934);setSpeed(kmh);set('js-spd-st',kmh>2?'주행중':'정지');}
     setGear(ds.shift_state||'P');
     if(ds.power!=null){
-      const kw=Math.round(ds.power);pushEnergy(kw);
-      const txt=(kw>=0?'+':'')+kw+' kW',col=kw<0?'var(--cyan)':kw>80?'var(--amber)':'var(--t1)';
-      const pwrEl=$('js-pwr');if(pwrEl){pwrEl.textContent=txt;pwrEl.style.color=col;}
-      set('js-pwr-label',txt);
+      const kw=Math.round(ds.power),txt=(kw>=0?'+':'')+kw+' kW';
+      const pwrEl=$('js-pwr');
+      if(pwrEl){pwrEl.textContent=txt;pwrEl.style.color=kw<0?'var(--cyan)':kw>80?'var(--amber)':'rgba(255,255,255,0.4)';}
     }
-    const isAP=ds.autopilot_state==='active'||ds.autopilot_state==='on';
-    const roadSvg=$('js-road-svg');if(roadSvg)roadSvg.classList.toggle('ap-on',isAP);
-    const apBadge=$('js-ap-badge');if(apBadge)apBadge.classList.toggle('on',isAP);
   }
   const vs=v.vehicle_state;
   if(vs){
@@ -794,41 +618,39 @@ function updateTeslaCards(v){
 }
 function onConnected(){
   isTeslaConnected=true;
-  $('c4-device').style.display='none';$('c4-tesla').style.display='flex';
-  $('c5-gps').style.display='none';$('c5-tesla').style.display='flex';
+  $('c4-device').style.display='none';$('c4-tesla').style.display='block';
+  $('c5-gps').style.display='none';$('c5-tesla').style.display='block';
   dot('hdr-dot','ok');set('hdr-tesla-txt',TS.name||'연결됨');
   set('sp-car-name',TS.name||'Model Y');
   $('sp-connected').style.display='block';$('sp-disconnected').style.display='none';
   dot('sp-dot','ok');set('sp-status-txt','연결됨 — '+TS.name);
-  pollInterval=30000;
-  fetchVehicleData();
+  pollInterval=30000;fetchVehicleData();
   if(teslaTimer)clearInterval(teslaTimer);
   teslaTimer=setInterval(fetchVehicleData,pollInterval);
 }
 function disconnect(){
   isTeslaConnected=false;
   if(teslaTimer){clearInterval(teslaTimer);teslaTimer=null;}
-  ['t_access','t_refresh','t_expiry','t_vid','t_name','t_pkce','t_cid','t_csec'].forEach(k=>localStorage.removeItem(k));
-  Object.assign(TS,{access:'',refresh:'',expiry:0,vid:'',name:'',clientId:'',clientSec:'',pkce:''});
-  $('c4-device').style.display='flex';$('c4-tesla').style.display='none';
-  $('c5-gps').style.display='flex';$('c5-tesla').style.display='none';
-  setGear('P');
+  ['t_access','t_refresh','t_expiry','t_vid','t_name','t_cid','t_csec'].forEach(k=>localStorage.removeItem(k));
+  Object.assign(TS,{access:'',refresh:'',expiry:0,vid:'',name:'',clientId:'',clientSec:''});
+  $('c4-device').style.display='block';$('c4-tesla').style.display='none';
+  $('c5-gps').style.display='block';$('c5-tesla').style.display='none';
   dot('hdr-dot','');set('hdr-tesla-txt','Tesla 연결');
   dot('sp-dot','');set('sp-status-txt','연결 안됨');
   $('sp-connected').style.display='none';$('sp-disconnected').style.display='block';
   toggleSettings();
 }
 
-/* ════════════════════════════════════════
+/* ════════════════════════════
    SETTINGS UI
-════════════════════════════════════════ */
+════════════════════════════ */
 function toggleSettings(){$('js-settings-ov').classList.toggle('show')}
 function closeSP(e){if(e.target===$('js-settings-ov'))toggleSettings()}
 function showErr(id,msg){const el=$(id);if(!el)return;el.textContent=msg;el.className='sp-err'+(msg?' show':'');}
 
-/* ════════════════════════════════════════
+/* ════════════════════════════
    AUTO-RECONNECT
-════════════════════════════════════════ */
+════════════════════════════ */
 (async()=>{
   if(TS.refresh){
     try{if(!TS.vid)await fetchVehicles();onConnected();}
