@@ -51,18 +51,18 @@ html,body{
 .wave{
   position:absolute;
   border-radius:50%;
-  border:1px solid rgba(0,220,255,0.12);
+  border:1px solid var(--wave-color, rgba(0,220,255,0.12));
   width:80px;height:50px;
-  animation:waveOut 12s ease-out infinite;
+  animation:waveOut var(--wave-dur, 12s) ease-out infinite;
 }
 .wave:nth-child(1){animation-delay:0s}
-.wave:nth-child(2){animation-delay:2.4s}
-.wave:nth-child(3){animation-delay:4.8s}
-.wave:nth-child(4){animation-delay:7.2s}
-.wave:nth-child(5){animation-delay:9.6s}
+.wave:nth-child(2){animation-delay:calc(var(--wave-dur,12s) / 5)}
+.wave:nth-child(3){animation-delay:calc(var(--wave-dur,12s) / 5 * 2)}
+.wave:nth-child(4){animation-delay:calc(var(--wave-dur,12s) / 5 * 3)}
+.wave:nth-child(5){animation-delay:calc(var(--wave-dur,12s) / 5 * 4)}
 @keyframes waveOut{
-  0%  {transform:scale(1);   opacity:.4}
-  60% {opacity:.08}
+  0%  {transform:scale(1);   opacity:var(--wave-opacity,.4)}
+  60% {opacity:.06}
   100%{transform:scale(22);  opacity:0}
 }
 
@@ -516,6 +516,34 @@ startGPS();
 /* 날씨 */
 const WI={};
 const WD={0:'Clear',1:'Mostly Clear',2:'Partly Cloudy',3:'Overcast',45:'Fog',48:'Fog',51:'Drizzle',53:'Drizzle',55:'Drizzle',61:'Rain',63:'Rain',65:'Heavy Rain',71:'Snow',73:'Snow',75:'Heavy Snow',80:'Showers',81:'Showers',82:'Heavy Showers',95:'Thunderstorm',99:'Thunderstorm'};
+const WAVE_STYLE={
+  0:  {color:'rgba(255,200,60,0.14)',  dur:'14s'}, // 맑음 — 따뜻한 황금
+  1:  {color:'rgba(180,220,255,0.12)', dur:'13s'}, // 대체로 맑음 — 연하늘
+  2:  {color:'rgba(160,200,255,0.12)', dur:'12s'}, // 구름 조금
+  3:  {color:'rgba(140,145,160,0.10)', dur:'16s'}, // 흐림 — 회색, 느린
+  45: {color:'rgba(200,205,215,0.08)', dur:'20s'}, // 안개 — 매우 흐릿, 초느린
+  48: {color:'rgba(200,205,215,0.08)', dur:'20s'},
+  51: {color:'rgba(80,170,255,0.14)',  dur:'10s'}, // 이슬비 — 파랑
+  53: {color:'rgba(80,170,255,0.14)',  dur:'10s'},
+  55: {color:'rgba(60,150,255,0.15)',  dur:'9s'},
+  61: {color:'rgba(40,130,255,0.16)',  dur:'8s'},  // 비 — 빠른 파랑
+  63: {color:'rgba(40,130,255,0.18)',  dur:'7s'},
+  65: {color:'rgba(20,100,255,0.20)',  dur:'6s'},  // 강한 비
+  71: {color:'rgba(220,235,255,0.16)', dur:'16s'}, // 눈 — 흰색, 느린
+  73: {color:'rgba(220,235,255,0.16)', dur:'16s'},
+  75: {color:'rgba(220,235,255,0.18)', dur:'18s'},
+  80: {color:'rgba(0,160,255,0.16)',   dur:'8s'},  // 소나기
+  81: {color:'rgba(0,160,255,0.16)',   dur:'7s'},
+  82: {color:'rgba(0,140,255,0.18)',   dur:'6s'},
+  95: {color:'rgba(180,80,255,0.22)',  dur:'4s'},  // 뇌우 — 보라, 매우 빠름
+  99: {color:'rgba(200,60,255,0.24)',  dur:'3.5s'},
+};
+function applyWaveStyle(code){
+  const s=WAVE_STYLE[code]||{color:'rgba(0,220,255,0.12)',dur:'12s'};
+  document.documentElement.style.setProperty('--wave-color',s.color);
+  document.documentElement.style.setProperty('--wave-dur',s.dur);
+}
+
 async function fetchWeather(la,lo){
   try{
     const r=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${la}&longitude=${lo}&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m&wind_speed_unit=ms&timezone=auto`);
@@ -523,6 +551,7 @@ async function fetchWeather(la,lo){
     set('js-wi',WI[c.weather_code]||'🌤️');set('js-tmp',Math.round(c.temperature_2m)+'°');
     set('js-dsc',WD[c.weather_code]||'--');set('js-feel',Math.round(c.apparent_temperature)+'°');
     set('js-hum',c.relative_humidity_2m+'%');set('js-wnd',c.wind_speed_10m+'m/s');
+    applyWaveStyle(c.weather_code);
   }catch{set('js-dsc','Error');}
 }
 
