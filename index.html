@@ -219,11 +219,8 @@ html,body{
 
 /* ── 풀스크린 ── */
 .fs-btn{
-  position:fixed;top:10px;right:10px;z-index:900;
-  width:26px;height:26px;border-radius:50%;
-  background:rgba(0,0,0,0.65);border:1px solid rgba(255,255,255,0.1);
-  display:flex;align-items:center;justify-content:center;
-  cursor:pointer;font-size:12px;color:var(--t2);
+  cursor:pointer;font-size:clamp(12px,1.6vh,16px);color:var(--t2);
+  display:flex;align-items:center;
 }
 .fs-btn:active{color:var(--red)}
 
@@ -265,7 +262,6 @@ html,body{
 <body>
 
 <div class="bg"></div>
-<div class="fs-btn" id="js-fs">⛶</div>
 
 <div class="gps-ov" id="js-gps-ov">
   <svg style="height:30px;fill:#E31937" viewBox="-2 -2 104 167">
@@ -316,13 +312,6 @@ html,body{
 <!-- DASHBOARD -->
 <div class="root">
 
-  <div class="topbar">
-    <div class="conn" id="hdr-tesla" onclick="toggleSettings()">
-      <div class="sdot" id="hdr-dot"></div>
-      <span id="hdr-tesla-txt">Connect Tesla</span>
-      <span style="font-size:13px;opacity:.45;margin-left:2px">⚙</span>
-    </div>
-  </div>
 
   <div class="main">
 
@@ -406,9 +395,15 @@ html,body{
   </div><!-- /main -->
 
   <div class="strip">
+    <div class="conn" id="hdr-tesla" onclick="toggleSettings()">
+      <div class="sdot" id="hdr-dot"></div>
+      <span id="hdr-tesla-txt">Connect Tesla</span>
+      <span style="opacity:.45;margin-left:2px">⚙</span>
+    </div>
     <div class="sitem"><div class="sdot" id="js-ndot"></div><span id="js-nst">Network</span></div>
     <div class="sitem"><div class="sdot" id="js-gdot"></div><span id="js-gst">GPS</span></div>
-    <div class="sitem" id="js-upd" style="font-size:11px;color:var(--t2)">—</div>
+    <div class="sitem" id="js-upd">—</div>
+    <div class="fs-btn" id="js-fs" style="position:static;width:auto;height:auto;background:none;border:none;padding:0">⛶</div>
   </div>
 
 </div>
