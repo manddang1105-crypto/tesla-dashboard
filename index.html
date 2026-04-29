@@ -55,7 +55,8 @@ html,body{
 .wave{
   position:absolute;
   border-radius:50%;
-  border:1px solid var(--wave-color, rgba(0,220,255,0.12));
+  border:2px solid var(--wave-color, rgba(0,220,255,0.35));
+  box-shadow:0 0 8px var(--wave-color, rgba(0,220,255,0.2));
   width:80px;height:50px;
   animation:waveOut var(--wave-dur, 12s) ease-out infinite;
 }
@@ -65,9 +66,9 @@ html,body{
 .wave:nth-child(4){animation-delay:calc(var(--wave-dur,12s) / 5 * 3)}
 .wave:nth-child(5){animation-delay:calc(var(--wave-dur,12s) / 5 * 4)}
 @keyframes waveOut{
-  0%  {transform:scale(1);   opacity:var(--wave-opacity,.4)}
-  60% {opacity:.06}
-  100%{transform:scale(22);  opacity:0}
+  0%  {transform:scale(1);   opacity:.75}
+  40% {opacity:.35}
+  100%{transform:scale(20);  opacity:0}
 }
 
 /* ── 루트 ── */
@@ -150,18 +151,18 @@ html,body{
 
 /* 속도 게이지 바 */
 .spd-gauge-wrap{
-  width:100%;height:clamp(6px,1.2vh,10px);
-  background:rgba(255,255,255,0.07);
-  border-radius:6px;overflow:hidden;
+  width:100%;height:clamp(8px,1.8vh,14px);
+  background:rgba(255,255,255,0.12);
+  border-radius:8px;overflow:visible;
   margin:clamp(6px,1.2vh,10px) 0 clamp(2px,.6vh,4px);
   position:relative;
 }
 .spd-gauge-fill{
-  height:100%;border-radius:6px;
+  height:100%;border-radius:8px;
   width:0%;
   transition:width .35s cubic-bezier(.4,0,.2,1), box-shadow .35s, background .35s;
   background:linear-gradient(90deg,#00dcff,#00ff99);
-  box-shadow:0 0 0px rgba(0,220,255,0);
+  box-shadow:0 0 10px 2px rgba(0,220,255,0.6), 0 0 20px 4px rgba(0,220,255,0.3);
   position:relative;
 }
 .spd-gauge-fill.active{
@@ -565,28 +566,29 @@ startGPS();
 
 /* 날씨 */
 const WI={};
+document.documentElement.style.setProperty('--wave-color','rgba(0,220,255,0.35)');
 const WD={0:'Clear',1:'Mostly Clear',2:'Partly Cloudy',3:'Overcast',45:'Fog',48:'Fog',51:'Drizzle',53:'Drizzle',55:'Drizzle',61:'Rain',63:'Rain',65:'Heavy Rain',71:'Snow',73:'Snow',75:'Heavy Snow',80:'Showers',81:'Showers',82:'Heavy Showers',95:'Thunderstorm',99:'Thunderstorm'};
 const WAVE_STYLE={
-  0:  {color:'rgba(255,200,60,0.14)',  dur:'14s'}, // 맑음 — 따뜻한 황금
-  1:  {color:'rgba(180,220,255,0.12)', dur:'13s'}, // 대체로 맑음 — 연하늘
-  2:  {color:'rgba(160,200,255,0.12)', dur:'12s'}, // 구름 조금
-  3:  {color:'rgba(140,145,160,0.10)', dur:'16s'}, // 흐림 — 회색, 느린
-  45: {color:'rgba(200,205,215,0.08)', dur:'20s'}, // 안개 — 매우 흐릿, 초느린
-  48: {color:'rgba(200,205,215,0.08)', dur:'20s'},
-  51: {color:'rgba(80,170,255,0.14)',  dur:'10s'}, // 이슬비 — 파랑
-  53: {color:'rgba(80,170,255,0.14)',  dur:'10s'},
-  55: {color:'rgba(60,150,255,0.15)',  dur:'9s'},
-  61: {color:'rgba(40,130,255,0.16)',  dur:'8s'},  // 비 — 빠른 파랑
-  63: {color:'rgba(40,130,255,0.18)',  dur:'7s'},
-  65: {color:'rgba(20,100,255,0.20)',  dur:'6s'},  // 강한 비
-  71: {color:'rgba(220,235,255,0.16)', dur:'16s'}, // 눈 — 흰색, 느린
-  73: {color:'rgba(220,235,255,0.16)', dur:'16s'},
-  75: {color:'rgba(220,235,255,0.18)', dur:'18s'},
-  80: {color:'rgba(0,160,255,0.16)',   dur:'8s'},  // 소나기
-  81: {color:'rgba(0,160,255,0.16)',   dur:'7s'},
-  82: {color:'rgba(0,140,255,0.18)',   dur:'6s'},
-  95: {color:'rgba(180,80,255,0.22)',  dur:'4s'},  // 뇌우 — 보라, 매우 빠름
-  99: {color:'rgba(200,60,255,0.24)',  dur:'3.5s'},
+  0:  {color:'rgba(255,200,60,0.45)',  dur:'14s'},
+  1:  {color:'rgba(180,220,255,0.38)', dur:'13s'},
+  2:  {color:'rgba(160,200,255,0.38)', dur:'12s'},
+  3:  {color:'rgba(140,145,160,0.32)', dur:'16s'},
+  45: {color:'rgba(200,205,215,0.25)', dur:'20s'},
+  48: {color:'rgba(200,205,215,0.25)', dur:'20s'},
+  51: {color:'rgba(80,170,255,0.40)',  dur:'10s'},
+  53: {color:'rgba(80,170,255,0.40)',  dur:'10s'},
+  55: {color:'rgba(60,150,255,0.42)',  dur:'9s'},
+  61: {color:'rgba(40,130,255,0.45)',  dur:'8s'},
+  63: {color:'rgba(40,130,255,0.48)',  dur:'7s'},
+  65: {color:'rgba(20,100,255,0.52)',  dur:'6s'},
+  71: {color:'rgba(220,235,255,0.45)', dur:'16s'},
+  73: {color:'rgba(220,235,255,0.45)', dur:'16s'},
+  75: {color:'rgba(220,235,255,0.50)', dur:'18s'},
+  80: {color:'rgba(0,160,255,0.48)',   dur:'8s'},
+  81: {color:'rgba(0,160,255,0.48)',   dur:'7s'},
+  82: {color:'rgba(0,140,255,0.52)',   dur:'6s'},
+  95: {color:'rgba(180,80,255,0.55)',  dur:'4s'},
+  99: {color:'rgba(200,60,255,0.60)',  dur:'3.5s'},
 };
 function applyWaveStyle(code){
   const s=WAVE_STYLE[code]||{color:'rgba(0,220,255,0.12)',dur:'12s'};
