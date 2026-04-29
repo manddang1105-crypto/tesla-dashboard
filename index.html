@@ -28,7 +28,8 @@ html,body{
 .bg{
   position:fixed;inset:0;z-index:0;
   background:url('bg.jpg') center center/cover no-repeat;
-  filter:brightness(0.65);
+  filter:brightness(var(--bg-brightness,0.65));
+  transition:filter 0.9s ease;
 }
 .bg::after{
   content:'';position:absolute;inset:0;
@@ -70,6 +71,21 @@ html,body{
   40% {opacity:.35}
   100%{transform:scale(20);  opacity:0}
 }
+
+/* ── 속도 반응 오버레이 ── */
+.speed-overlay{
+  position:fixed;inset:0;z-index:1;pointer-events:none;
+  /* 2중 비네트: 외곽 어둠 + 중앙 미세 밝음 */
+  background:
+    radial-gradient(ellipse 80% 100% at center,
+      transparent 30%,
+      var(--spd-vignette, rgba(0,0,0,0)) 100%),
+    radial-gradient(ellipse 40% 60% at center,
+      var(--spd-center, rgba(0,0,0,0)) 0%,
+      transparent 100%);
+  transition:background 0.9s ease;
+}
+
 
 /* ── 루트 ── */
 .root{
@@ -160,19 +176,35 @@ html,body{
 .spd-gauge-fill{
   height:100%;border-radius:8px;
   width:0%;
-  transition:width .35s cubic-bezier(.4,0,.2,1), box-shadow .35s, background .35s;
+  transition:width .55s cubic-bezier(.2,0,.4,1), box-shadow .4s, background .35s;
   background:linear-gradient(90deg,#00dcff,#00ff99);
-  box-shadow:0 0 10px 2px rgba(0,220,255,0.6), 0 0 20px 4px rgba(0,220,255,0.3);
+  box-shadow:0 0 0px rgba(0,220,255,0);
   position:relative;
+  overflow:visible;
 }
-.spd-gauge-fill.active{
-  box-shadow:0 0 12px 2px rgba(0,220,255,0.7), 0 0 24px 4px rgba(0,220,255,0.3);
+/* Glowing tip dot at leading edge */
+.spd-gauge-fill.driving::after{
+  content:'';
+  position:absolute;right:-3px;top:50%;
+  transform:translateY(-50%);
+  width:clamp(12px,2.8vh,20px);height:clamp(12px,2.8vh,20px);
+  border-radius:50%;
+  background:white;
+  filter:blur(5px);
+  animation:tipPulse .9s ease-in-out infinite alternate;
 }
-@keyframes gaugeShimmer{
-  0%{opacity:1}50%{opacity:.7}100%{opacity:1}
+@keyframes tipPulse{
+  from{opacity:.5;transform:translateY(-50%) scale(.8)}
+  to{opacity:1;transform:translateY(-50%) scale(1.2)}
 }
-.spd-gauge-fill.driving{
-  animation:gaugeShimmer 1.2s ease-in-out infinite;
+/* Burst flash on acceleration */
+@keyframes gaugeBurst{
+  0%{filter:brightness(1)}
+  18%{filter:brightness(2.4) saturate(1.6)}
+  100%{filter:brightness(1)}
+}
+.spd-gauge-fill.burst{
+  animation:gaugeBurst .38s ease-out forwards;
 }
 
 /* 시계 섹션: 카드 절반 높이, 중앙 정렬 */
@@ -224,6 +256,86 @@ html,body{
 }
 .r-divider{height:1px;background:rgba(255,255,255,0.07);flex-shrink:0}
 
+/* ── 나침반 ── */
+.batt-compass-row{
+  flex-direction:row !important;
+  align-items:flex-start;
+  gap:clamp(6px,1.5vw,14px);
+}
+.batt-col{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;text-align:center;padding-top:clamp(4px,1vh,10px)}
+
+/* ── 나침반 (heading tape) ── */
+.compass-wrap{
+  flex:1;min-width:0;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  text-align:center;
+  gap:clamp(2px,.5vh,5px);
+}
+.htape-outer{
+  position:relative;
+  width:100%;min-width:0;
+  height:clamp(28px,5vh,42px);
+  overflow:hidden;
+}
+/* center marker — fixed inverted chevron */
+.htape-outer::after{
+  content:'';
+  position:absolute;bottom:0;left:50%;transform:translateX(-50%);
+  width:0;height:0;
+  border-left:5px solid transparent;
+  border-right:5px solid transparent;
+  border-bottom:6px solid var(--cyan);
+  filter:drop-shadow(0 0 4px rgba(0,220,255,.9));
+  z-index:3;pointer-events:none;
+}
+/* edge fade */
+.htape-outer::before{
+  content:'';position:absolute;inset:0;z-index:2;pointer-events:none;
+  background:linear-gradient(90deg,
+    rgba(0,0,0,.95) 0%,transparent 28%,transparent 72%,rgba(0,0,0,.95) 100%);
+}
+.htape-inner{
+  position:absolute;top:0;height:100%;
+  display:flex;align-items:flex-end;
+  transition:transform .42s cubic-bezier(.34,1.28,.64,1);
+}
+.htape-mark{
+  flex-shrink:0;
+  display:flex;flex-direction:column;align-items:center;
+  justify-content:flex-end;gap:2px;padding-bottom:2px;
+}
+.htape-lbl{
+  font-family:'Anton',Impact,sans-serif;
+  font-size:clamp(8px,1.5vh,12px);
+  letter-spacing:.5px;white-space:nowrap;line-height:1;
+}
+.htape-lbl.hn{color:var(--red)}
+.htape-lbl.hc{color:var(--cyan)}
+.htape-lbl.hd{color:rgba(255,255,255,.38)}
+.htape-line{width:1px;}
+.htape-line.hn{height:clamp(8px,1.5vh,12px);background:var(--red)}
+.htape-line.hc{height:clamp(8px,1.5vh,12px);background:var(--cyan)}
+.htape-line.hd{height:clamp(5px,1vh,8px);background:rgba(255,255,255,.22)}
+/* readout */
+.compass-readout{display:flex;align-items:baseline;gap:clamp(4px,.8vw,8px)}
+.compass-dir{
+  font-family:'Anton',Impact,sans-serif;
+  font-size:clamp(48px,11vh,88px);
+  color:var(--t0);letter-spacing:1px;line-height:1;
+}
+@keyframes dirBurst{
+  0%{opacity:0;transform:scale(1.65);text-shadow:0 0 28px rgba(0,220,255,1),0 0 56px rgba(0,220,255,.5)}
+  45%{opacity:1;transform:scale(.92);text-shadow:0 0 14px rgba(0,220,255,.7)}
+  100%{transform:scale(1);opacity:1;text-shadow:none}
+}
+.compass-dir.flip{animation:dirBurst .38s cubic-bezier(.34,1.2,.64,1) forwards}
+.compass-deg{
+  font-family:'Anton',Impact,sans-serif;
+  font-size:clamp(9px,1.6vh,13px);
+  color:var(--t2);letter-spacing:2px;
+}
+
 .sec-lbl{
   font-size:clamp(7px,1.3vh,10px);letter-spacing:3px;color:var(--t2);
   text-transform:uppercase;margin-bottom:clamp(4px,1vh,8px);
@@ -231,18 +343,46 @@ html,body{
 }
 
 /* 날씨 */
+.wx-alt-row{flex-direction:row !important;align-items:center;gap:clamp(6px,1.5vw,14px)}
+.wx-col{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;text-align:center;padding-top:clamp(4px,1vh,10px)}
 .wx-temp{font-size:clamp(48px,11vh,88px);font-weight:100;line-height:1;color:var(--t0);font-family:'Anton',Impact,sans-serif}
 .wx-desc{font-size:clamp(10px,1.8vh,17px);color:var(--t1);margin-top:clamp(2px,.6vh,4px);font-family:'Anton',Impact,sans-serif;letter-spacing:1px}
 .wx-detail{display:flex;gap:clamp(4px,1vw,8px);margin-top:clamp(6px,1.2vh,10px);width:100%;justify-content:center}
 .wx-d{display:flex;flex-direction:column;align-items:center}
 .wx-d-lbl{font-size:clamp(7px,1.1vh,9px);letter-spacing:2px;color:var(--t2);font-family:'Anton',Impact,sans-serif}
 .wx-d-val{font-size:clamp(10px,1.8vh,14px);font-weight:300;color:var(--t1);font-family:'Anton',Impact,sans-serif}
+/* 고도계 */
+.alt-wrap{
+  flex:1;min-width:0;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  text-align:center;
+  gap:clamp(2px,.5vh,5px);
+}
+.alt-num{
+  font-family:'Anton',Impact,sans-serif;
+  font-size:clamp(48px,11vh,88px);
+  font-weight:100;line-height:1;color:var(--t0);
+  transition:color .3s;
+}
+@keyframes altRise{
+  0%{text-shadow:0 0 24px rgba(0,220,255,.9),0 0 48px rgba(0,220,255,.4)}
+  100%{text-shadow:none}
+}
+@keyframes altFall{
+  0%{text-shadow:0 0 24px rgba(230,126,34,.9),0 0 48px rgba(230,126,34,.4)}
+  100%{text-shadow:none}
+}
+.alt-num.rising{animation:altRise .55s ease-out forwards;color:var(--cyan)}
+.alt-num.falling{animation:altFall .55s ease-out forwards;color:#e67e22}
+.alt-unit{font-family:'Anton',Impact,sans-serif;font-size:clamp(9px,1.6vh,13px);color:var(--t2);letter-spacing:2px}
+.alt-acc{font-family:'Anton',Impact,sans-serif;font-size:clamp(9px,1.6vh,13px);color:var(--t1)}
 
 /* 배터리 */
-.batt-row{display:flex;align-items:baseline;gap:8px}
+#c4-device,#c4-tesla{display:flex;flex-direction:column;align-items:center;text-align:center;width:100%}
+.batt-row{display:flex;align-items:baseline;justify-content:center;gap:8px}
 .batt-num{font-size:clamp(48px,11vh,88px);font-weight:100;line-height:1;color:var(--t0);font-family:'Anton',Impact,sans-serif}
 .batt-unit{font-size:clamp(9px,1.6vh,13px);color:var(--t2);letter-spacing:2px}
-.batt-bar-wrap{height:4px;background:rgba(255,255,255,0.1);border-radius:3px;overflow:hidden;margin:clamp(6px,1.2vh,10px) 0 clamp(4px,1vh,6px);width:100%}
+.batt-bar-wrap{height:4px;background:rgba(255,255,255,0.1);border-radius:3px;overflow:hidden;margin:clamp(12px,2.2vh,18px) 0 clamp(4px,1vh,6px);width:100%}
 .batt-fill{height:100%;border-radius:3px;transition:width .6s,background .4s}
 .batt-sub{font-size:clamp(9px,1.6vh,13px);color:var(--t1);font-family:'Anton',Impact,sans-serif}
 
@@ -313,6 +453,7 @@ html,body{
 <body>
 
 <div class="bg"></div>
+<div class="speed-overlay" id="js-spd-bg"></div>
 <div class="wave-bg">
   <div class="wave"></div>
   <div class="wave"></div>
@@ -409,42 +550,72 @@ html,body{
     <!-- 오른쪽: 날씨 + 배터리 + 위치 -->
     <div class="card card-right">
 
-      <!-- 배터리 섹션 -->
-      <div class="r-section">
-        <!-- 기기 배터리 -->
-        <div id="c4-device">
-          <div class="sec-lbl">BATTERY</div>
-          <div class="batt-row">
-            <div class="batt-num" id="js-bat">--%</div>
+      <!-- 배터리 + 날씨 섹션 (위) -->
+      <div class="r-section batt-compass-row">
+
+        <!-- 배터리 (왼쪽) -->
+        <div class="batt-col">
+          <!-- 기기 배터리 -->
+          <div id="c4-device">
+            <div class="sec-lbl">BATTERY</div>
+            <div class="batt-row">
+              <div class="batt-num" id="js-bat">--%</div>
+            </div>
+            <div class="batt-bar-wrap"><div class="batt-fill" id="js-bar" style="width:0%"></div></div>
+            <div class="batt-sub" id="js-bst">Loading</div>
           </div>
-          <div class="batt-bar-wrap"><div class="batt-fill" id="js-bar" style="width:0%"></div></div>
-          <div class="batt-sub" id="js-bst">Loading</div>
-        </div>
-        <!-- Tesla 배터리 -->
-        <div id="c4-tesla" style="display:none">
-          <div class="sec-lbl">VEHICLE BATTERY</div>
-          <div class="batt-row">
-            <div class="batt-num" id="tesla-batt-pct">--%</div>
-            <div class="batt-unit">SOC</div>
+          <!-- Tesla 배터리 -->
+          <div id="c4-tesla" style="display:none">
+            <div class="sec-lbl">VEHICLE BATTERY</div>
+            <div class="batt-row">
+              <div class="batt-num" id="tesla-batt-pct">--%</div>
+              <div class="batt-unit">SOC</div>
+            </div>
+            <div class="batt-bar-wrap"><div class="batt-fill" id="tesla-batt-bar" style="width:0%"></div></div>
+            <div class="batt-sub" id="tesla-batt-range">-- km</div>
+            <div class="batt-sub" id="tesla-batt-st" style="font-size:11px;opacity:.7;margin-top:2px"></div>
           </div>
-          <div class="batt-bar-wrap"><div class="batt-fill" id="tesla-batt-bar" style="width:0%"></div></div>
-          <div class="batt-sub" id="tesla-batt-range">-- km</div>
-          <div class="batt-sub" id="tesla-batt-st" style="font-size:11px;opacity:.7;margin-top:2px"></div>
         </div>
+
+        <!-- 날씨 (오른쪽) -->
+        <div class="wx-col">
+          <div class="sec-lbl">WEATHER</div>
+          <div class="wx-temp" id="js-tmp">--°</div>
+          <div class="wx-desc" id="js-dsc">--</div>
+          <div class="wx-detail">
+            <div class="wx-d"><div class="wx-d-lbl">FEELS LIKE</div><div class="wx-d-val" id="js-feel">--°</div></div>
+            <div class="wx-d"><div class="wx-d-lbl">HUMIDITY</div><div class="wx-d-val" id="js-hum">--%</div></div>
+            <div class="wx-d"><div class="wx-d-lbl">WIND</div><div class="wx-d-val" id="js-wnd">--</div></div>
+          </div>
+        </div>
+
       </div>
 
       <div class="r-divider"></div>
 
-      <!-- 날씨 섹션 -->
-      <div class="r-section">
-        <div class="sec-lbl">WEATHER</div>
-        <div class="wx-temp" id="js-tmp">--°</div>
-        <div class="wx-desc" id="js-dsc">--</div>
-        <div class="wx-detail">
-          <div class="wx-d"><div class="wx-d-lbl">FEELS LIKE</div><div class="wx-d-val" id="js-feel">--°</div></div>
-          <div class="wx-d"><div class="wx-d-lbl">HUMIDITY</div><div class="wx-d-val" id="js-hum">--%</div></div>
-          <div class="wx-d"><div class="wx-d-lbl">WIND</div><div class="wx-d-val" id="js-wnd">--</div></div>
+      <!-- 나침반 + 고도계 섹션 (아래) -->
+      <div class="r-section wx-alt-row">
+
+        <!-- 나침반 (왼쪽) -->
+        <div class="compass-wrap">
+          <div class="sec-lbl">HEADING</div>
+          <div class="compass-readout">
+            <span class="compass-dir" id="js-dir">--</span>
+            <span class="compass-deg" id="js-deg">---°</span>
+          </div>
+          <div class="htape-outer">
+            <div class="htape-inner" id="js-htape"></div>
+          </div>
         </div>
+
+        <!-- 고도계 (오른쪽) -->
+        <div class="alt-wrap">
+          <div class="sec-lbl">ALTITUDE</div>
+          <div class="alt-num" id="js-alt">--</div>
+          <div class="alt-unit">M</div>
+          <div class="alt-acc" id="js-alt-acc"></div>
+        </div>
+
       </div>
 
 
@@ -461,6 +632,7 @@ html,body{
     <div class="sitem"><div class="sdot" id="js-ndot"></div><span id="js-nst">Network</span></div>
     <div class="sitem"><div class="sdot" id="js-gdot"></div><span id="js-gst">GPS</span></div>
     <div class="sitem" id="js-upd">—</div>
+    <div class="sitem" id="js-demo-btn" onclick="toggleDemo()" style="cursor:pointer;color:var(--t2);letter-spacing:2px;font-family:'Anton',Impact,sans-serif;font-size:clamp(8px,1.3vh,11px)">DEMO</div>
     <div class="fs-btn" id="js-fs" style="position:static;width:auto;height:auto;background:none;border:none;padding:0">⛶</div>
   </div>
 
@@ -501,13 +673,20 @@ function tick(){
 setInterval(tick,1000);tick();
 
 /* 속도/기어 */
+let _prevSpd=0;
 function setSpeed(kmh){
   set('js-spd',kmh);
   const bar=$('js-spd-bar');
   if(bar){
     const pct=Math.min(100,Math.round(kmh/120*100));
+    const rising=kmh>_prevSpd;
+    const delta=kmh-_prevSpd;
+    // Direction-aware transition: snap up with spring, decay down slowly
+    const widthTr=rising
+      ?'width .14s cubic-bezier(.34,1.56,.64,1)'
+      :'width .58s cubic-bezier(.2,0,.4,1)';
+    bar.style.transition=`${widthTr}, box-shadow .35s, background .3s`;
     bar.style.width=pct+'%';
-    // 속도별 색상: 0→cyan, 50→green, 80→yellow, 100+→red
     let color,glow;
     if(kmh<=0){
       color='linear-gradient(90deg,#00dcff,#00b4cc)';
@@ -528,9 +707,120 @@ function setSpeed(kmh){
     bar.style.background=color;
     bar.style.boxShadow=glow;
     bar.classList.toggle('driving', kmh>2);
+    // Burst flash on significant acceleration
+    if(rising && delta>4 && kmh>2){
+      bar.classList.remove('burst');
+      void bar.offsetWidth;
+      bar.classList.add('burst');
+      setTimeout(()=>bar.classList.remove('burst'),400);
+    }
+    _prevSpd=kmh;
+    // 속도 배경 반응
+    updateSpeedBg(kmh);
   }
 }
+function updateSpeedBg(kmh){
+  const root=document.documentElement;
+  const t=Math.min(1,kmh/120); // 0(정지) → 1(120km/h)
+  // ① 웨이브 속도: 12s → 1.8s
+  const dur=(12-t*10.2).toFixed(1);
+  root.style.setProperty('--wave-dur',dur+'s');
+  // ② 배경 어두워짐: 0.65 → 0.30
+  const br=(0.65-t*0.35).toFixed(2);
+  root.style.setProperty('--bg-brightness',br);
+  // ③ 강한 터널 비네트 (외곽 블랙)
+  const vAlpha=(t*0.82).toFixed(2);
+  root.style.setProperty('--spd-vignette',`rgba(0,0,0,${vAlpha})`);
+  // ④ 중앙 약간 밝아짐 (터널 중심 효과)
+  const cAlpha=(t*0.12).toFixed(2);
+  root.style.setProperty('--spd-center',`rgba(255,255,255,${cAlpha})`);
+}
 function setGear(g){set('js-gear',g||'P')}
+
+/* 고도계 — 카운트 애니메이션 + 방향 글로우 */
+let _altDisp=null,_altTarget=null,_altRaf=null;
+function updateAltimeter(alt,acc){
+  if(alt==null||isNaN(alt))return;
+  const newAlt=Math.round(alt);
+  if(newAlt===_altTarget)return;
+  _altTarget=newAlt;
+  if(_altRaf){cancelAnimationFrame(_altRaf);_altRaf=null;}
+  const el=$('js-alt');
+  if(!el){set('js-alt',newAlt);_altDisp=newAlt;return;}
+  const from=_altDisp??newAlt;
+  const delta=Math.abs(newAlt-from);
+  if(delta===0){el.textContent=newAlt;_altDisp=newAlt;return;}
+  // burst glow class
+  const rising=newAlt>from;
+  el.classList.remove('rising','falling');
+  void el.offsetWidth;
+  el.classList.add(rising?'rising':'falling');
+  setTimeout(()=>el.classList.remove('rising','falling'),600);
+  // count animation: ease-out cubic, capped 150–500ms
+  const dur=Math.min(500,Math.max(150,delta*6));
+  const t0=performance.now();
+  function step(now){
+    const p=Math.min(1,(now-t0)/dur);
+    const e=1-(1-p)**3;
+    const v=Math.round(from+(newAlt-from)*e);
+    el.textContent=v;
+    _altDisp=v;
+    if(p<1){_altRaf=requestAnimationFrame(step);}
+    else{_altRaf=null;_altDisp=newAlt;}
+  }
+  _altRaf=requestAnimationFrame(step);
+  set('js-alt-acc',acc!=null?'±'+Math.round(acc)+'m':'');
+}
+
+
+/* 나침반 — heading tape */
+const _HT_PX=40;  // px per 45° segment
+const _HT_SEGS=[
+  {lbl:'N',cls:'hn'},{lbl:'NE',cls:'hd'},{lbl:'E',cls:'hc'},
+  {lbl:'SE',cls:'hd'},{lbl:'S',cls:'hc'},{lbl:'SW',cls:'hd'},
+  {lbl:'W',cls:'hc'},{lbl:'NW',cls:'hd'},
+];
+(function buildHTape(){
+  const tape=$('js-htape');if(!tape)return;
+  let html='';
+  for(let loop=0;loop<5;loop++){
+    for(const{lbl,cls}of _HT_SEGS){
+      html+=`<div class="htape-mark" style="width:${_HT_PX}px">`;
+      html+=`<span class="htape-lbl ${cls}">${lbl}</span>`;
+      html+=`<div class="htape-line ${cls}"></div></div>`;
+    }
+  }
+  tape.innerHTML=html;
+})();
+
+let _compassRot=null,_prevDir='';
+const _DIRS=['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
+const _HTPX=_HT_PX/45;
+function updateCompass(heading){
+  heading=((heading%360)+360)%360;
+  if(_compassRot===null){
+    _compassRot=heading+720; // start in middle of 5-loop tape
+  } else {
+    let diff=heading-(_compassRot%360);
+    if(diff>180)diff-=360;
+    if(diff<-180)diff+=360;
+    _compassRot+=diff;
+  }
+  const tape=$('js-htape');
+  const outer=tape&&tape.parentElement;
+  if(tape&&outer){
+    const visW=outer.offsetWidth||110;
+    tape.style.transform=`translateX(${-_compassRot*_HTPX+visW/2}px)`;
+  }
+  set('js-deg',Math.round(heading)+'°');
+  const dir=_DIRS[Math.round(heading/22.5)%16];
+  if(dir!==_prevDir){
+    const d=$('js-dir');
+    if(d){d.classList.remove('flip');void d.offsetWidth;d.classList.add('flip');}
+    set('js-dir',dir);
+    _prevDir=dir;
+  }
+}
 
 /* GPS */
 let wxTs=0,prevLat=null,prevLon=null,prevGpsT=null;
@@ -547,6 +837,8 @@ function onGPS(p){
   else if(prevLat!==null){const dt=(ts-prevGpsT)/1000;if(dt>0.5&&dt<8){const d=haversine(prevLat,prevLon,la,lo);const c=(d/dt)*3.6;kmh=c<250?Math.round(c):0;}}
   prevLat=la;prevLon=lo;prevGpsT=ts;
   if(!isTeslaConnected){setSpeed(kmh);set('js-spd-st',kmh>2?'DRIVING':'STOP');}
+  if(p.coords.heading!=null&&!isNaN(p.coords.heading))updateCompass(p.coords.heading);
+  if(p.coords.altitude!=null)updateAltimeter(p.coords.altitude,p.coords.altitudeAccuracy);
   set('js-lat',la.toFixed(5)+'°N');set('js-lon',lo.toFixed(5)+'°E');set('js-acc','정확도 ±'+Math.round(ac)+'m');
   dot('js-gdot','ok');set('js-gst','GPS Active');
   const now=Date.now();if(now-wxTs>600000){wxTs=now;fetchWeather(la,lo);}
@@ -707,6 +999,7 @@ function updateTeslaCards(v){
   const ds=v.drive_state;
   if(ds){
     if(ds.speed!=null){const kmh=Math.round(ds.speed*1.60934);setSpeed(kmh);set('js-spd-st',kmh>2?'DRIVING':'STOP');}
+    if(ds.heading!=null)updateCompass(ds.heading);
     setGear(ds.shift_state||'P');
     if(ds.power!=null){
       const kw=Math.round(ds.power),txt=(kw>=0?'+':'')+kw+' kW';
@@ -754,6 +1047,59 @@ function showErr(id,msg){const el=$(id);if(!el)return;el.textContent=msg;el.clas
     catch(e){console.warn('Auto reconnect:',e.message);dot('hdr-dot','err');set('hdr-tesla-txt','Reconnect Failed');}
   }
 })();
+
+/* ── DEMO MODE ── */
+let _demoTimer=null,_demoT=0;
+const _DEMO_SCRIPT=[
+  // [ms, speed, heading, altitude, battPct, gear]
+  [0,    0,   45,  38, 78, 'P'],
+  [800,  12,  45,  38, 78, 'D'],
+  [1600, 34,  52,  40, 77, 'D'],
+  [2400, 67,  68,  45, 77, 'D'],
+  [3200, 95,  82,  52, 76, 'D'],
+  [4000,115,  91,  60, 76, 'D'],
+  [4800,108,  91,  60, 75, 'D'],
+  [5600, 88, 110,  55, 75, 'D'],
+  [6400, 72, 135,  48, 74, 'D'],
+  [7200, 55, 178,  42, 74, 'D'],
+  [8000, 38, 225,  36, 74, 'D'],
+  [8800, 20, 270,  30, 73, 'D'],
+  [9600,  8, 315,  28, 73, 'D'],
+  [10400, 0, 358,  25, 73, 'P'],
+  [11200, 0,   2,  25, 73, 'P'],
+];
+function runDemoStep(idx){
+  if(!_demoTimer)return;
+  const step=_DEMO_SCRIPT[idx];
+  const[,spd,hdg,alt,bat,gear]=step;
+  setSpeed(spd);
+  set('js-spd-st',spd>2?'DRIVING':'STOP');
+  setGear(gear);
+  updateCompass(hdg);
+  updateAltimeter(alt,null);
+  // device battery
+  const bel=$('js-bat');if(bel)bel.textContent=bat+'%';
+  const bar=$('js-bar');if(bar){bar.style.width=bat+'%';bar.style.background=bat>50?'#2ECC71':bat>20?'#E67E22':'#E31937';}
+  set('js-bst',spd>2?'Discharging · '+bat+'%':'Idle');
+  // power estimate
+  const kw=spd>2?Math.round(spd*0.9*(spd>80?1.4:1)):0;
+  const pwrEl=$('js-pwr');
+  if(pwrEl){pwrEl.textContent=(kw>0?'+':'')+kw+' kW';pwrEl.style.color=kw>80?'var(--amber)':'rgba(255,255,255,0.5)';}
+  const next=idx+1<_DEMO_SCRIPT.length?idx+1:0;
+  const delay=next===0?2000:(_DEMO_SCRIPT[next][0]-step[0]);
+  _demoTimer=setTimeout(()=>runDemoStep(next),delay);
+}
+function toggleDemo(){
+  const btn=$('js-demo-btn');
+  if(_demoTimer){
+    clearTimeout(_demoTimer);_demoTimer=null;
+    if(btn){btn.style.color='var(--t2)';}
+  } else {
+    _demoTimer=true; // non-null sentinel before first step
+    if(btn){btn.style.color='var(--cyan)';}
+    runDemoStep(0);
+  }
+}
 </script>
 </body>
 </html>
