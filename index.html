@@ -28,8 +28,7 @@ html,body{
 .bg{
   position:fixed;inset:0;z-index:0;
   background:url('bg.jpg') center center/cover no-repeat;
-  filter:brightness(var(--bg-brightness,0.65));
-  transition:filter 0.9s ease;
+  filter:brightness(0.65);
 }
 .bg::after{
   content:'';position:absolute;inset:0;
@@ -53,38 +52,65 @@ html,body{
   display:flex;align-items:center;justify-content:center;
   pointer-events:none;
 }
-.wave{
-  position:absolute;
-  border-radius:50%;
-  border:2px solid var(--wave-color, rgba(0,220,255,0.35));
-  box-shadow:0 0 8px var(--wave-color, rgba(0,220,255,0.2));
-  width:80px;height:50px;
-  animation:waveOut var(--wave-dur, 12s) ease-out infinite;
+/* Pulse 계열 — 빠르고 선명, 작은 타원 */
+.wave{position:absolute;border-radius:50%;}
+.wave.wp{
+  width:56px;height:34px;
+  border:2px solid var(--wave-color,rgba(0,220,255,.45));
+  box-shadow:0 0 10px var(--wave-color,rgba(0,220,255,.25));
+  animation:wavePulse calc(var(--wave-dur,12s) * .42) cubic-bezier(.15,.7,.35,1) infinite;
 }
-.wave:nth-child(1){animation-delay:0s}
-.wave:nth-child(2){animation-delay:calc(var(--wave-dur,12s) / 5)}
-.wave:nth-child(3){animation-delay:calc(var(--wave-dur,12s) / 5 * 2)}
-.wave:nth-child(4){animation-delay:calc(var(--wave-dur,12s) / 5 * 3)}
-.wave:nth-child(5){animation-delay:calc(var(--wave-dur,12s) / 5 * 4)}
-@keyframes waveOut{
-  0%  {transform:scale(1);   opacity:.75}
-  40% {opacity:.35}
-  100%{transform:scale(20);  opacity:0}
+.wave.wp:nth-child(1){animation-delay:0s}
+.wave.wp:nth-child(2){animation-delay:calc(var(--wave-dur,12s) * .14)}
+.wave.wp:nth-child(3){animation-delay:calc(var(--wave-dur,12s) * .28)}
+/* Drift 계열 — 느리고 크고 회전 */
+.wave.wd{
+  width:110px;height:66px;
+  border:1px solid var(--wave-color,rgba(0,220,255,.22));
+  box-shadow:0 0 6px var(--wave-color,rgba(0,220,255,.10));
+  animation:waveDrift var(--wave-dur,12s) cubic-bezier(.08,.55,.28,1) infinite;
+}
+.wave.wd:nth-child(4){animation-delay:0s}
+.wave.wd:nth-child(5){animation-delay:calc(var(--wave-dur,12s) / 4)}
+.wave.wd:nth-child(6){animation-delay:calc(var(--wave-dur,12s) / 4 * 2)}
+.wave.wd:nth-child(7){animation-delay:calc(var(--wave-dur,12s) / 4 * 3)}
+/* 중앙 코어 글로우 */
+.wave-core{
+  position:absolute;width:16px;height:10px;
+  border-radius:50%;
+  background:var(--wave-color,rgba(0,220,255,.7));
+  box-shadow:0 0 16px var(--wave-color,rgba(0,220,255,.5)),0 0 32px var(--wave-color,rgba(0,220,255,.2));
+  filter:blur(2.5px);
+  animation:coreBreath var(--core-breath,3.2s) ease-in-out infinite;
+}
+/* 버스트 충격파 */
+.wave-burst{
+  width:56px;height:34px;
+  border:3px solid var(--wave-color,rgba(0,220,255,.95)) !important;
+  box-shadow:0 0 18px var(--wave-color,rgba(0,220,255,.6)) !important;
+  animation:waveBurst .65s ease-out forwards !important;
+}
+@keyframes wavePulse{
+  0%  {transform:scale(1);            opacity:.85; filter:blur(0px)}
+  12% {opacity:1}
+  55% {opacity:.28;                               filter:blur(.8px)}
+  100%{transform:scale(17);           opacity:0;   filter:blur(3px)}
+}
+@keyframes waveDrift{
+  0%  {transform:scale(1)  rotate(0deg);  opacity:.55; filter:blur(0px)}
+  25% {opacity:.3}
+  100%{transform:scale(22) rotate(18deg); opacity:0;   filter:blur(5px)}
+}
+@keyframes coreBreath{
+  0%,100%{transform:scale(1);   opacity:.45}
+  50%    {transform:scale(2.4); opacity:1}
+}
+@keyframes waveBurst{
+  0%  {transform:scale(1);  opacity:1;   filter:blur(0)}
+  100%{transform:scale(14); opacity:0;   filter:blur(8px)}
 }
 
 /* ── 속도 반응 오버레이 ── */
-.speed-overlay{
-  position:fixed;inset:0;z-index:1;pointer-events:none;
-  /* 2중 비네트: 외곽 어둠 + 중앙 미세 밝음 */
-  background:
-    radial-gradient(ellipse 80% 100% at center,
-      transparent 30%,
-      var(--spd-vignette, rgba(0,0,0,0)) 100%),
-    radial-gradient(ellipse 40% 60% at center,
-      var(--spd-center, rgba(0,0,0,0)) 0%,
-      transparent 100%);
-  transition:background 0.9s ease;
-}
 
 
 /* ── 루트 ── */
@@ -143,13 +169,16 @@ html,body{
   text-align:center;
 }
 .spd-num{
-  font-size:clamp(48px,11vh,88px);
+  font-size:clamp(80px,17vh,158px);
   font-weight:100;
-  letter-spacing:-2px;
+  letter-spacing:-4px;
   line-height:1;
   font-family:'Anton',Impact,sans-serif;
   color:var(--t0);
   font-variant-numeric:tabular-nums;
+  display:inline-block;
+  transform-origin:center;
+  will-change:transform,filter;
 }
 .spd-unit{font-family:'Anton',Impact,sans-serif;
   font-size:clamp(8px,1.4vh,12px);letter-spacing:4px;
@@ -167,14 +196,29 @@ html,body{
 
 /* 속도 게이지 바 */
 .spd-gauge-wrap{
-  width:100%;height:clamp(8px,1.8vh,14px);
-  background:rgba(255,255,255,0.12);
-  border-radius:8px;overflow:visible;
+  width:100%;height:clamp(10px,2.2vh,18px);
+  background:linear-gradient(90deg,
+    rgba(0,220,255,0.10) 0%,
+    rgba(0,255,150,0.08) 33%,
+    rgba(255,200,0,0.07) 66%,
+    rgba(255,60,0,0.09) 100%);
+  border-radius:10px;overflow:visible;
   margin:clamp(6px,1.2vh,10px) 0 clamp(2px,.6vh,4px);
   position:relative;
+  box-shadow:inset 0 1px 3px rgba(0,0,0,0.4);
+}
+/* 구간 눈금선 */
+.spd-gauge-wrap::before{
+  content:'';
+  position:absolute;inset:0;
+  background:
+    linear-gradient(90deg, transparent calc(33.3% - .5px), rgba(255,255,255,0.10) calc(33.3% - .5px), rgba(255,255,255,0.10) 33.3%, transparent 33.3%),
+    linear-gradient(90deg, transparent calc(66.6% - .5px), rgba(255,255,255,0.10) calc(66.6% - .5px), rgba(255,255,255,0.10) 66.6%, transparent 66.6%);
+  border-radius:10px;
+  z-index:2;pointer-events:none;
 }
 .spd-gauge-fill{
-  height:100%;border-radius:8px;
+  height:100%;border-radius:10px;
   width:0%;
   transition:width .55s cubic-bezier(.2,0,.4,1), box-shadow .4s, background .35s;
   background:linear-gradient(90deg,#00dcff,#00ff99);
@@ -182,30 +226,79 @@ html,body{
   position:relative;
   overflow:visible;
 }
+/* 속도 눈금 라벨 */
+.spd-ticks{
+  display:flex;justify-content:space-between;
+  width:100%;padding:0 1px;
+  margin-bottom:clamp(4px,1vh,8px);
+}
+.spd-tick{
+  font-family:'Anton',Impact,sans-serif;
+  font-size:clamp(7px,1.1vh,9px);
+  color:rgba(255,255,255,0.20);
+  letter-spacing:0;
+}
 /* Glowing tip dot at leading edge */
 .spd-gauge-fill.driving::after{
   content:'';
-  position:absolute;right:-3px;top:50%;
+  position:absolute;right:-4px;top:50%;
   transform:translateY(-50%);
-  width:clamp(12px,2.8vh,20px);height:clamp(12px,2.8vh,20px);
+  width:clamp(16px,3.6vh,26px);height:clamp(16px,3.6vh,26px);
   border-radius:50%;
   background:white;
-  filter:blur(5px);
-  animation:tipPulse .9s ease-in-out infinite alternate;
+  filter:blur(7px);
+  animation:tipPulse .75s ease-in-out infinite alternate;
+}
+/* 팁 외곽 헤일로 */
+.spd-gauge-fill.driving::before{
+  content:'';
+  position:absolute;right:-10px;top:50%;
+  transform:translateY(-50%);
+  width:clamp(28px,6vh,44px);height:clamp(28px,6vh,44px);
+  border-radius:50%;
+  border:1.5px solid rgba(255,255,255,0.18);
+  box-shadow:0 0 10px rgba(255,255,255,0.15);
+  animation:tipHalo .75s ease-in-out infinite alternate;
 }
 @keyframes tipPulse{
-  from{opacity:.5;transform:translateY(-50%) scale(.8)}
-  to{opacity:1;transform:translateY(-50%) scale(1.2)}
+  from{opacity:.55;transform:translateY(-50%) scale(.82)}
+  to  {opacity:1;  transform:translateY(-50%) scale(1.25)}
+}
+@keyframes tipHalo{
+  from{opacity:.25;transform:translateY(-50%) scale(.75)}
+  to  {opacity:.70;transform:translateY(-50%) scale(1.10)}
 }
 /* Burst flash on acceleration */
 @keyframes gaugeBurst{
   0%{filter:brightness(1)}
-  18%{filter:brightness(2.4) saturate(1.6)}
+  18%{filter:brightness(2.8) saturate(1.8)}
   100%{filter:brightness(1)}
 }
 .spd-gauge-fill.burst{
-  animation:gaugeBurst .38s ease-out forwards;
+  animation:gaugeBurst .42s ease-out forwards;
 }
+
+/* 속도 숫자 모션 */
+@keyframes spdPunch{
+  0%  {transform:scale(1.28);filter:brightness(1.8) blur(1.5px);opacity:.65}
+  42% {transform:scale(0.94);filter:brightness(1.1);opacity:1}
+  68% {transform:scale(1.03)}
+  100%{transform:scale(1);filter:brightness(1);opacity:1}
+}
+@keyframes spdBrake{
+  0%,100%{transform:translateX(0) scale(1)}
+  18%    {transform:translateX(-5px) scale(0.97)}
+  36%    {transform:translateX(5px)  scale(0.98)}
+  54%    {transform:translateX(-3px)}
+  72%    {transform:translateX(3px)}
+}
+@keyframes spdIdle{
+  0%,100%{opacity:1}
+  50%    {opacity:.55}
+}
+.spd-num.punch{animation:spdPunch .40s cubic-bezier(.34,1.35,.64,1) forwards}
+.spd-num.brake{animation:spdBrake .32s ease-out forwards}
+.spd-num.idle {animation:spdIdle 2.4s ease-in-out infinite}
 
 /* 시계 섹션: 카드 절반 높이, 중앙 정렬 */
 .clock-section{
@@ -221,6 +314,7 @@ html,body{
 }
 @keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
 .clk-colon{animation:blink 1s step-start infinite}
+.clk-sec{font-size:.60em;color:var(--t2);letter-spacing:1px;vertical-align:middle}
 .clock-date{font-size:clamp(9px,1.6vh,13px);color:var(--t2);letter-spacing:2px;margin-top:clamp(4px,1vh,8px);font-family:'Anton',Impact,sans-serif}
 
 /* ── 중앙 투명: 카드 너비 동일(35%씩)하면 void 가 정확히 중앙 ── */
@@ -386,6 +480,21 @@ html,body{
 .batt-fill{height:100%;border-radius:3px;transition:width .6s,background .4s}
 .batt-sub{font-size:clamp(9px,1.6vh,13px);color:var(--t1);font-family:'Anton',Impact,sans-serif}
 
+/* 트립 컴퓨터 */
+@keyframes tripPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.6)}}
+.trip-dot{display:inline-block;width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,.18);margin-right:5px;vertical-align:middle;transition:background .4s,box-shadow .4s}
+.trip-dot.active{background:var(--cyan);box-shadow:0 0 8px var(--cyan);animation:tripPulse 1.2s ease-in-out infinite}
+.trip-dist{font-family:'Anton',Impact,sans-serif;font-size:clamp(36px,8vh,70px);font-weight:100;line-height:1;color:var(--t0);letter-spacing:-1px}
+.trip-dist-unit{font-family:'Anton',Impact,sans-serif;font-size:clamp(9px,1.5vh,12px);color:var(--t2);letter-spacing:2px;vertical-align:middle;margin-left:3px}
+.trip-time{font-family:'Anton',Impact,sans-serif;font-size:clamp(12px,2.2vh,17px);color:var(--cyan);letter-spacing:2px;margin:clamp(3px,.8vh,7px) 0}
+.trip-stats{display:flex;gap:clamp(4px,.8vw,7px);width:100%}
+.trip-stat{flex:1;display:flex;flex-direction:column;align-items:center;background:rgba(255,255,255,0.045);border-radius:8px;padding:clamp(3px,.7vh,6px) clamp(3px,.8vw,7px)}
+.trip-stat-lbl{font-family:'Anton',Impact,sans-serif;font-size:clamp(6px,1vh,8px);letter-spacing:2px;color:var(--t2)}
+.trip-stat-val{font-family:'Anton',Impact,sans-serif;font-size:clamp(17px,3.6vh,28px);color:var(--t0);line-height:1.1;margin-top:2px}
+.trip-stat-unit{font-family:'Anton',Impact,sans-serif;font-size:clamp(6px,.9vh,8px);color:var(--t2);margin-top:1px}
+.trip-reset{font-family:'Anton',Impact,sans-serif;font-size:clamp(7px,1vh,9px);letter-spacing:2px;color:var(--t2);margin-top:clamp(4px,1vh,8px);cursor:pointer;padding:3px 10px;border-radius:10px;border:1px solid rgba(255,255,255,0.08);background:none;transition:background .15s,color .15s}
+.trip-reset:active{background:rgba(255,255,255,0.07);color:var(--red)}
+
 /* 위치 */
 .loc-val{font-size:14px;font-weight:300;color:var(--t1);font-family:'SF Mono',monospace;margin-top:5px}
 .loc-acc{font-size:12px;color:var(--t2);margin-top:4px}
@@ -453,14 +562,7 @@ html,body{
 <body>
 
 <div class="bg"></div>
-<div class="speed-overlay" id="js-spd-bg"></div>
-<div class="wave-bg">
-  <div class="wave"></div>
-  <div class="wave"></div>
-  <div class="wave"></div>
-  <div class="wave"></div>
-  <div class="wave"></div>
-</div>
+<canvas id="js-wx-canvas" style="position:fixed;inset:0;z-index:0;pointer-events:none"></canvas>
 
 <div class="gps-ov" id="js-gps-ov">
   <svg style="height:30px;fill:#E31937" viewBox="-2 -2 104 167">
@@ -522,6 +624,7 @@ html,body{
         <div class="spd-num" id="js-spd">0</div>
         <div class="spd-unit">KM / H</div>
         <div class="spd-gauge-wrap"><div class="spd-gauge-fill" id="js-spd-bar"></div></div>
+        <div class="spd-ticks"><span class="spd-tick">0</span><span class="spd-tick">40</span><span class="spd-tick">80</span><span class="spd-tick">120</span></div>
         <div class="spd-row">
           <span class="spd-gear" id="js-gear">P</span>
           <span class="spd-st" id="js-spd-st">STOP</span>
@@ -533,7 +636,7 @@ html,body{
 
       <div class="clock-section">
         <div class="sec-lbl">TIME</div>
-        <div class="clock-time"><span id="js-clk-h">--</span><span class="clk-colon">:</span><span id="js-clk-m">--</span></div>
+        <div class="clock-time"><span id="js-clk-h">--</span><span class="clk-colon">:</span><span id="js-clk-m">--</span><span class="clk-sec"><span class="clk-colon">:</span><span id="js-clk-s">--</span></span></div>
         <div class="clock-date" id="js-dt">----.--.-- (--)</div>
       </div>
 
@@ -555,25 +658,30 @@ html,body{
 
         <!-- 배터리 (왼쪽) -->
         <div class="batt-col">
-          <!-- 기기 배터리 -->
-          <div id="c4-device">
-            <div class="sec-lbl">BATTERY</div>
-            <div class="batt-row">
-              <div class="batt-num" id="js-bat">--%</div>
+          <div class="sec-lbl"><span class="trip-dot" id="js-trip-dot"></span>TRIP</div>
+          <div><span class="trip-dist" id="js-trip-dist">0.0</span><span class="trip-dist-unit">KM</span></div>
+          <div class="trip-time" id="js-trip-time">00:00:00</div>
+          <div class="trip-stats">
+            <div class="trip-stat">
+              <div class="trip-stat-lbl">AVG</div>
+              <div class="trip-stat-val" id="js-trip-avg">—</div>
+              <div class="trip-stat-unit">km/h</div>
             </div>
-            <div class="batt-bar-wrap"><div class="batt-fill" id="js-bar" style="width:0%"></div></div>
-            <div class="batt-sub" id="js-bst">Loading</div>
+            <div class="trip-stat">
+              <div class="trip-stat-lbl">MAX</div>
+              <div class="trip-stat-val" id="js-trip-max">—</div>
+              <div class="trip-stat-unit">km/h</div>
+            </div>
           </div>
-          <!-- Tesla 배터리 -->
-          <div id="c4-tesla" style="display:none">
-            <div class="sec-lbl">VEHICLE BATTERY</div>
-            <div class="batt-row">
-              <div class="batt-num" id="tesla-batt-pct">--%</div>
-              <div class="batt-unit">SOC</div>
+          <button class="trip-reset" onclick="resetTrip()">↺ RESET</button>
+          <!-- Tesla 배터리 (연결 시 보조 표시) -->
+          <div id="c4-tesla" style="display:none;width:100%;margin-top:clamp(6px,1.2vh,10px)">
+            <div class="batt-bar-wrap" style="margin:0 0 4px"><div class="batt-fill" id="tesla-batt-bar" style="width:0%"></div></div>
+            <div style="display:flex;justify-content:space-between;align-items:baseline">
+              <span id="tesla-batt-pct" class="batt-sub">--%</span>
+              <span id="tesla-batt-range" class="batt-sub" style="opacity:.6;font-size:clamp(8px,1.3vh,11px)">-- km</span>
             </div>
-            <div class="batt-bar-wrap"><div class="batt-fill" id="tesla-batt-bar" style="width:0%"></div></div>
-            <div class="batt-sub" id="tesla-batt-range">-- km</div>
-            <div class="batt-sub" id="tesla-batt-st" style="font-size:11px;opacity:.7;margin-top:2px"></div>
+            <div id="tesla-batt-st" class="batt-sub" style="font-size:clamp(7px,1.1vh,9px);opacity:.45;margin-top:2px"></div>
           </div>
         </div>
 
@@ -586,6 +694,10 @@ html,body{
             <div class="wx-d"><div class="wx-d-lbl">FEELS LIKE</div><div class="wx-d-val" id="js-feel">--°</div></div>
             <div class="wx-d"><div class="wx-d-lbl">HUMIDITY</div><div class="wx-d-val" id="js-hum">--%</div></div>
             <div class="wx-d"><div class="wx-d-lbl">WIND</div><div class="wx-d-val" id="js-wnd">--</div></div>
+          </div>
+          <div class="wx-detail" style="margin-top:clamp(4px,1vh,8px)">
+            <div class="wx-d"><div class="wx-d-lbl">UV IDX</div><div class="wx-d-val" id="js-uv" style="color:var(--t2)">--</div></div>
+            <div class="wx-d"><div class="wx-d-lbl">AQI</div><div class="wx-d-val" id="js-aqi" style="color:var(--t2)">--</div></div>
           </div>
         </div>
 
@@ -648,6 +760,7 @@ const PROXY='https://corsproxy.io/?';
 const AUTH='https://fleet-auth.prd.vn.cloud.tesla.com/oauth2/v3';
 const TAPI='https://fleet-api.prd.na.vn.cloud.tesla.com';
 let teslaTimer=null,isTeslaConnected=false,pollInterval=30000;
+let _tripDist=0,_tripStart=null,_tripSpdSamples=[],_tripMaxSpd=0,_tripPLat=null,_tripPLon=null;
 
 function $(id){return document.getElementById(id)}
 function set(id,v){const e=$(id);if(e)e.textContent=v}
@@ -667,24 +780,47 @@ document.addEventListener('fullscreenchange',()=>{$('js-fs').textContent=documen
 const DAYS=['SUN','MON','TUE','WED','THU','FRI','SAT'];
 function tick(){
   const d=new Date();
-  set('js-clk-h',pad(d.getHours()));set('js-clk-m',pad(d.getMinutes()));
+  set('js-clk-h',pad(d.getHours()));set('js-clk-m',pad(d.getMinutes()));set('js-clk-s',pad(d.getSeconds()));
   set('js-dt',d.getFullYear()+'.'+pad(d.getMonth()+1)+'.'+pad(d.getDate())+' ('+DAYS[d.getDay()]+')');
+  updateTripTime();
 }
 setInterval(tick,1000);tick();
 
 /* 속도/기어 */
 let _prevSpd=0;
 function setSpeed(kmh){
+  const numEl=$('js-spd');
   set('js-spd',kmh);
   const bar=$('js-spd-bar');
+  const rising=kmh>_prevSpd;
+  const delta=Math.abs(kmh-_prevSpd);
+
+  // ── 숫자 모션 ──
+  if(numEl){
+    if(kmh===0){
+      numEl.classList.remove('punch','brake');
+      if(!numEl.classList.contains('idle')){numEl.classList.add('idle');}
+    } else {
+      numEl.classList.remove('idle');
+      if(rising && delta>=4 && kmh>2){
+        numEl.classList.remove('punch','brake');
+        void numEl.offsetWidth;
+        numEl.classList.add('punch');
+        setTimeout(()=>numEl.classList.remove('punch'),440);
+      } else if(!rising && delta>=10){
+        numEl.classList.remove('punch','brake');
+        void numEl.offsetWidth;
+        numEl.classList.add('brake');
+        setTimeout(()=>numEl.classList.remove('brake'),340);
+      }
+    }
+  }
+
   if(bar){
     const pct=Math.min(100,Math.round(kmh/120*100));
-    const rising=kmh>_prevSpd;
-    const delta=kmh-_prevSpd;
-    // Direction-aware transition: snap up with spring, decay down slowly
     const widthTr=rising
-      ?'width .14s cubic-bezier(.34,1.56,.64,1)'
-      :'width .58s cubic-bezier(.2,0,.4,1)';
+      ?'width .13s cubic-bezier(.34,1.56,.64,1)'
+      :'width .60s cubic-bezier(.2,0,.4,1)';
     bar.style.transition=`${widthTr}, box-shadow .35s, background .3s`;
     bar.style.width=pct+'%';
     let color,glow;
@@ -693,55 +829,57 @@ function setSpeed(kmh){
       glow='0 0 0px rgba(0,220,255,0)';
     } else if(kmh<50){
       color='linear-gradient(90deg,#00dcff,#00ff99)';
-      glow=`0 0 ${8+pct/5}px 2px rgba(0,220,255,.7),0 0 ${16+pct/4}px 4px rgba(0,220,255,.3)`;
+      glow=`0 0 ${10+pct/4}px 3px rgba(0,220,255,.85),0 0 ${22+pct/3}px 6px rgba(0,220,255,.35),0 0 ${40+pct/2}px 10px rgba(0,220,255,.12)`;
     } else if(kmh<80){
       color='linear-gradient(90deg,#00ff99,#ffe000)';
-      glow=`0 0 12px 3px rgba(0,255,120,.6),0 0 24px 6px rgba(0,255,120,.25)`;
+      glow=`0 0 14px 4px rgba(0,255,120,.80),0 0 28px 8px rgba(0,255,120,.35),0 0 50px 12px rgba(0,255,120,.12)`;
     } else if(kmh<100){
       color='linear-gradient(90deg,#ffe000,#ff8c00)';
-      glow=`0 0 14px 3px rgba(255,200,0,.7),0 0 28px 6px rgba(255,150,0,.3)`;
+      glow=`0 0 16px 4px rgba(255,200,0,.85),0 0 32px 8px rgba(255,150,0,.40),0 0 56px 14px rgba(255,120,0,.15)`;
     } else {
       color='linear-gradient(90deg,#ff4e00,#ff0033)';
-      glow=`0 0 16px 4px rgba(255,50,0,.8),0 0 32px 8px rgba(255,0,50,.4)`;
+      glow=`0 0 18px 5px rgba(255,50,0,.90),0 0 36px 10px rgba(255,0,50,.45),0 0 64px 18px rgba(255,0,30,.18)`;
     }
     bar.style.background=color;
     bar.style.boxShadow=glow;
     bar.classList.toggle('driving', kmh>2);
-    // Burst flash on significant acceleration
     if(rising && delta>4 && kmh>2){
       bar.classList.remove('burst');
       void bar.offsetWidth;
       bar.classList.add('burst');
-      setTimeout(()=>bar.classList.remove('burst'),400);
+      setTimeout(()=>bar.classList.remove('burst'),440);
+      triggerWaveBurst();
     }
-    _prevSpd=kmh;
-    // 속도 배경 반응
-    updateSpeedBg(kmh);
   }
+  _prevSpd=kmh;
 }
-function updateSpeedBg(kmh){
-  const root=document.documentElement;
-  const t=Math.min(1,kmh/120); // 0(정지) → 1(120km/h)
-  // ① 웨이브 속도: 12s → 1.8s
-  const dur=(12-t*10.2).toFixed(1);
-  root.style.setProperty('--wave-dur',dur+'s');
-  // ② 배경 어두워짐: 0.65 → 0.30
-  const br=(0.65-t*0.35).toFixed(2);
-  root.style.setProperty('--bg-brightness',br);
-  // ③ 강한 터널 비네트 (외곽 블랙)
-  const vAlpha=(t*0.82).toFixed(2);
-  root.style.setProperty('--spd-vignette',`rgba(0,0,0,${vAlpha})`);
-  // ④ 중앙 약간 밝아짐 (터널 중심 효과)
-  const cAlpha=(t*0.12).toFixed(2);
-  root.style.setProperty('--spd-center',`rgba(255,255,255,${cAlpha})`);
+function triggerWaveBurst(){
+  const bg=$('js-wave-bg');if(!bg)return;
+  const n=document.createElement('div');
+  n.className='wave wave-burst';
+  bg.appendChild(n);
+  setTimeout(()=>{if(n.parentNode)bg.removeChild(n);},700);
 }
 function setGear(g){set('js-gear',g||'P')}
 
-/* 고도계 — 카운트 애니메이션 + 방향 글로우 */
+/* 고도계 — EMA 스무딩 + 롤링 평균 + AGL 표시 */
 let _altDisp=null,_altTarget=null,_altRaf=null;
-function updateAltimeter(alt,acc){
-  if(alt==null||isNaN(alt))return;
-  const newAlt=Math.round(alt);
+let _altEMA=null,_altSamples=[];
+const _ALT_ALPHA=0.18,_ALT_N=6;
+let _terrainElev=null;
+
+function updateAltimeter(rawAlt,acc){
+  if(rawAlt==null||isNaN(rawAlt))return;
+
+  // 1) 롤링 평균 (최근 N개 GPS 샘플 평균 → 순간 스파이크 제거)
+  _altSamples.push(rawAlt);
+  if(_altSamples.length>_ALT_N)_altSamples.shift();
+  const avg=_altSamples.reduce((s,v)=>s+v,0)/_altSamples.length;
+
+  // 2) EMA (지수 이동 평균 → 드리프트 스무딩)
+  _altEMA=(_altEMA==null)?avg:_ALT_ALPHA*avg+(1-_ALT_ALPHA)*_altEMA;
+
+  const newAlt=Math.round(_altEMA);
   if(newAlt===_altTarget)return;
   _altTarget=newAlt;
   if(_altRaf){cancelAnimationFrame(_altRaf);_altRaf=null;}
@@ -750,14 +888,12 @@ function updateAltimeter(alt,acc){
   const from=_altDisp??newAlt;
   const delta=Math.abs(newAlt-from);
   if(delta===0){el.textContent=newAlt;_altDisp=newAlt;return;}
-  // burst glow class
   const rising=newAlt>from;
   el.classList.remove('rising','falling');
   void el.offsetWidth;
   el.classList.add(rising?'rising':'falling');
   setTimeout(()=>el.classList.remove('rising','falling'),600);
-  // count animation: ease-out cubic, capped 150–500ms
-  const dur=Math.min(500,Math.max(150,delta*6));
+  const dur=Math.min(400,Math.max(100,delta*4));
   const t0=performance.now();
   function step(now){
     const p=Math.min(1,(now-t0)/dur);
@@ -769,7 +905,14 @@ function updateAltimeter(alt,acc){
     else{_altRaf=null;_altDisp=newAlt;}
   }
   _altRaf=requestAnimationFrame(step);
-  set('js-alt-acc',acc!=null?'±'+Math.round(acc)+'m':'');
+
+  // 정확도 + AGL(지상고도) 병행 표시
+  let accTxt=acc!=null?'±'+Math.round(acc)+'m':'';
+  if(_terrainElev!=null){
+    const agl=Math.round(_altEMA-_terrainElev);
+    accTxt+=(accTxt?'  ':'')+( agl>=0?'+':'')+agl+'m AGL';
+  }
+  set('js-alt-acc',accTxt);
 }
 
 
@@ -837,6 +980,7 @@ function onGPS(p){
   else if(prevLat!==null){const dt=(ts-prevGpsT)/1000;if(dt>0.5&&dt<8){const d=haversine(prevLat,prevLon,la,lo);const c=(d/dt)*3.6;kmh=c<250?Math.round(c):0;}}
   prevLat=la;prevLon=lo;prevGpsT=ts;
   if(!isTeslaConnected){setSpeed(kmh);set('js-spd-st',kmh>2?'DRIVING':'STOP');}
+  onTripUpdate(la,lo,kmh);
   if(p.coords.heading!=null&&!isNaN(p.coords.heading))updateCompass(p.coords.heading);
   if(p.coords.altitude!=null)updateAltimeter(p.coords.altitude,p.coords.altitudeAccuracy);
   set('js-lat',la.toFixed(5)+'°N');set('js-lon',lo.toFixed(5)+'°E');set('js-acc','정확도 ±'+Math.round(ac)+'m');
@@ -888,15 +1032,183 @@ function applyWaveStyle(code){
   document.documentElement.style.setProperty('--wave-dur',s.dur);
 }
 
+/* ── 날씨 배경 이펙트 ── */
+const _wxC=document.getElementById('js-wx-canvas');
+const _wxX=_wxC?_wxC.getContext('2d'):null;
+let _wxParts=[],_wxMode=null,_wxRaf=null,_wxFlash=0,_wxLT=null;
+
+function _wxResize(){
+  if(!_wxC)return;
+  _wxC.width=window.innerWidth;_wxC.height=window.innerHeight;
+}
+_wxResize();
+window.addEventListener('resize',_wxResize);
+
+function setWeatherEffect(code){
+  let m=null;
+  if(code===45||code===48)m='fog';
+  else if(code===51||code===53)m='drizzle';
+  else if(code===55||code===61||code===63||code===80||code===81)m='rain';
+  else if(code===65||code===82)m='heavyrain';
+  else if(code===71||code===73||code===75)m='snow';
+  else if(code===95||code===99)m='storm';
+  if(m===_wxMode)return;
+  _wxMode=m;
+  _wxParts=[];_wxFlash=0;
+  if(_wxLT){clearTimeout(_wxLT);_wxLT=null;}
+  if(_wxRaf){cancelAnimationFrame(_wxRaf);_wxRaf=null;}
+  if(!_wxX||!m){if(_wxX&&_wxC)_wxX.clearRect(0,0,_wxC.width,_wxC.height);return;}
+  _wxInitParts(m);
+  _wxDraw();
+}
+
+function _wxInitParts(m){
+  const W=_wxC.width,H=_wxC.height;
+  if(m==='drizzle'||m==='rain'||m==='heavyrain'||m==='storm'){
+    const n=m==='drizzle'?80:m==='rain'?160:m==='heavyrain'?230:280;
+    for(let i=0;i<n;i++){
+      _wxParts.push({
+        x:Math.random()*W*1.4-W*0.2,y:Math.random()*H,
+        spd:m==='drizzle'?5+Math.random()*4:9+Math.random()*9,
+        len:m==='drizzle'?6+Math.random()*7:12+Math.random()*14,
+        op:m==='drizzle'?0.15+Math.random()*0.25:0.2+Math.random()*0.4,
+        w:m==='drizzle'?0.5:0.7+Math.random()*0.5
+      });
+    }
+    if(m==='storm')_wxScheduleLightning();
+  }
+  if(m==='snow'){
+    for(let i=0;i<110;i++){
+      _wxParts.push({
+        x:Math.random()*W,y:Math.random()*H,
+        r:1.2+Math.random()*2.8,
+        spd:0.5+Math.random()*1.2,
+        drift:Math.random()*Math.PI*2,
+        ds:0.006+Math.random()*0.012,
+        op:0.35+Math.random()*0.55
+      });
+    }
+  }
+  if(m==='fog'){
+    for(let i=0;i<7;i++){
+      _wxParts.push({
+        x:Math.random()*W,y:H*0.2+Math.random()*H*0.55,
+        w:W*0.5+Math.random()*W*0.7,h:50+Math.random()*90,
+        spd:0.15+Math.random()*0.25,dir:Math.random()>.5?1:-1,
+        op:0.035+Math.random()*0.045
+      });
+    }
+  }
+}
+
+function _wxDraw(){
+  if(!_wxX||!_wxMode)return;
+  const W=_wxC.width,H=_wxC.height;
+  _wxX.clearRect(0,0,W,H);
+  const m=_wxMode;
+
+  if(m==='drizzle'||m==='rain'||m==='heavyrain'||m==='storm'){
+    // 번개 플래시
+    if(_wxFlash>0){
+      _wxX.fillStyle=`rgba(210,225,255,${_wxFlash})`;
+      _wxX.fillRect(0,0,W,H);
+      _wxFlash=Math.max(0,_wxFlash-0.055);
+    }
+    const ang=Math.PI/5.5; // 기울기 각도
+    const dx=Math.sin(ang),dy=Math.cos(ang);
+    _wxX.lineCap='round';
+    _wxParts.forEach(p=>{
+      _wxX.beginPath();
+      _wxX.strokeStyle=`rgba(185,215,255,${p.op})`;
+      _wxX.lineWidth=p.w;
+      _wxX.moveTo(p.x,p.y);
+      _wxX.lineTo(p.x+dx*p.len,p.y+dy*p.len);
+      _wxX.stroke();
+      p.x+=dx*p.spd*0.38;p.y+=dy*p.spd;
+      if(p.y>H+20){p.y=-20;p.x=Math.random()*W*1.4-W*0.2;}
+      if(p.x>W+40)p.x=-40;
+    });
+  }
+
+  if(m==='snow'){
+    _wxParts.forEach(p=>{
+      // 눈송이 글로우
+      const grd=_wxX.createRadialGradient(p.x,p.y,0,p.x,p.y,p.r*2.5);
+      grd.addColorStop(0,`rgba(225,238,255,${p.op})`);
+      grd.addColorStop(1,'rgba(225,238,255,0)');
+      _wxX.beginPath();_wxX.arc(p.x,p.y,p.r*2.5,0,Math.PI*2);
+      _wxX.fillStyle=grd;_wxX.fill();
+      // 코어
+      _wxX.beginPath();_wxX.arc(p.x,p.y,p.r,0,Math.PI*2);
+      _wxX.fillStyle=`rgba(235,245,255,${p.op})`;_wxX.fill();
+      p.drift+=p.ds;
+      p.x+=Math.sin(p.drift)*0.55;p.y+=p.spd;
+      if(p.y>H+p.r){p.y=-p.r;p.x=Math.random()*W;}
+    });
+  }
+
+  if(m==='fog'){
+    _wxParts.forEach(p=>{
+      const grd=_wxX.createRadialGradient(
+        p.x+p.w/2,p.y+p.h/2,0,p.x+p.w/2,p.y+p.h/2,p.w/2);
+      grd.addColorStop(0,`rgba(200,210,220,${p.op})`);
+      grd.addColorStop(1,'rgba(200,210,220,0)');
+      _wxX.fillStyle=grd;
+      _wxX.fillRect(p.x,p.y,p.w,p.h);
+      p.x+=p.spd*p.dir;
+      if(p.x>W+p.w)p.x=-p.w;
+      if(p.x<-p.w*2)p.x=W+p.w/2;
+    });
+  }
+
+  _wxRaf=requestAnimationFrame(_wxDraw);
+}
+
+function _wxScheduleLightning(){
+  if(_wxMode!=='storm')return;
+  const d=2500+Math.random()*6000;
+  _wxLT=setTimeout(()=>{
+    _wxFlash=0.18+Math.random()*0.22;
+    _wxScheduleLightning();
+  },d);
+}
+
 async function fetchWeather(la,lo){
   try{
-    const r=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${la}&longitude=${lo}&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m&wind_speed_unit=ms&timezone=auto`);
-    const{current:c}=await r.json();
+    const r=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${la}&longitude=${lo}&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m,uv_index&wind_speed_unit=ms&timezone=auto`);
+    const data=await r.json();
+    if(data.elevation!=null)_terrainElev=data.elevation;
+    const{current:c}=data;
     set('js-wi',WI[c.weather_code]||'🌤️');set('js-tmp',Math.round(c.temperature_2m)+'°');
     set('js-dsc',WD[c.weather_code]||'--');set('js-feel',Math.round(c.apparent_temperature)+'°');
     set('js-hum',c.relative_humidity_2m+'%');set('js-wnd',c.wind_speed_10m+'m/s');
     applyWaveStyle(c.weather_code);
+    setWeatherEffect(c.weather_code);
+    if(c.uv_index!=null){
+      const uv=Math.round(c.uv_index*10)/10;
+      const el=$('js-uv');if(el){el.textContent=uv;el.style.color=uvColor(uv);}
+    }
+    fetchAQI(la,lo);
   }catch{set('js-dsc','Error');}
+}
+async function fetchAQI(la,lo){
+  try{
+    const r=await fetch(`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${la}&longitude=${lo}&current=european_aqi&timezone=auto`);
+    const d=await r.json();
+    if(d.current?.european_aqi!=null){
+      const aqi=Math.round(d.current.european_aqi);
+      const el=$('js-aqi');if(el){el.textContent=aqi;el.style.color=aqiColor(aqi);}
+    }
+  }catch{}
+}
+function uvColor(v){
+  if(v<=2)return'var(--green)';if(v<=5)return'#FFD700';
+  if(v<=7)return'var(--amber)';if(v<=10)return'var(--red)';return'#C39BD3';
+}
+function aqiColor(v){
+  if(v<=20)return'var(--green)';if(v<=40)return'#9ACD32';
+  if(v<=60)return'#FFD700';if(v<=80)return'var(--amber)';
+  if(v<=100)return'var(--red)';return'#C39BD3';
 }
 
 /* 기기 배터리 */
@@ -917,6 +1229,35 @@ window.addEventListener('online',netUpd);window.addEventListener('offline',netUp
 async function reqWake(){try{if('wakeLock'in navigator)await navigator.wakeLock.request('screen')}catch{}}
 reqWake();
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')reqWake();});
+
+/* 트립 컴퓨터 */
+function resetTrip(){
+  _tripDist=0;_tripStart=null;_tripSpdSamples=[];_tripMaxSpd=0;_tripPLat=null;_tripPLon=null;
+  set('js-trip-dist','0.0');set('js-trip-time','00:00:00');
+  set('js-trip-avg','—');set('js-trip-max','—');
+  const d=$('js-trip-dot');if(d)d.className='trip-dot';
+}
+function updateTripTime(){
+  if(!_tripStart)return;
+  const e=Math.floor((Date.now()-_tripStart)/1000);
+  const h=Math.floor(e/3600),m=Math.floor((e%3600)/60),s=e%60;
+  set('js-trip-time',(h?pad(h)+':':'')+pad(m)+':'+pad(s));
+}
+function onTripUpdate(la,lo,kmh){
+  if(_tripStart===null&&kmh>3)_tripStart=Date.now();
+  if(_tripStart===null)return;
+  if(_tripPLat!==null){
+    const d=haversine(_tripPLat,_tripPLon,la,lo);
+    if(d<300)_tripDist+=d/1000;
+  }
+  _tripPLat=la;_tripPLon=lo;
+  if(kmh>3)_tripSpdSamples.push(kmh);
+  if(kmh>_tripMaxSpd)_tripMaxSpd=kmh;
+  set('js-trip-dist',_tripDist.toFixed(1));
+  if(_tripMaxSpd>0){const el=$('js-trip-max');if(el){el.textContent=_tripMaxSpd;el.style.color=_tripMaxSpd>100?'var(--red)':_tripMaxSpd>80?'var(--amber)':'var(--t0)';}}
+  if(_tripSpdSamples.length)set('js-trip-avg',Math.round(_tripSpdSamples.reduce((a,b)=>a+b,0)/_tripSpdSamples.length));
+  const dot=$('js-trip-dot');if(dot)dot.className='trip-dot'+(kmh>3?' active':'');
+}
 
 /* Tesla API */
 async function connectRefresh(){
@@ -1015,8 +1356,7 @@ function updateTeslaCards(v){
 }
 function onConnected(){
   isTeslaConnected=true;
-  $('c4-device').style.display='none';$('c4-tesla').style.display='block';
-  $('c5-gps').style.display='none';$('c5-tesla').style.display='block';
+  $('c4-tesla').style.display='block';
   dot('hdr-dot','ok');set('hdr-tesla-txt',TS.name||'Connected');
   set('sp-car-name',TS.name||'Model Y');
   $('sp-connected').style.display='block';$('sp-disconnected').style.display='none';
@@ -1030,8 +1370,7 @@ function disconnect(){
   if(teslaTimer){clearInterval(teslaTimer);teslaTimer=null;}
   ['t_access','t_refresh','t_expiry','t_vid','t_name','t_cid','t_csec'].forEach(k=>localStorage.removeItem(k));
   Object.assign(TS,{access:'',refresh:'',expiry:0,vid:'',name:'',clientId:'',clientSec:''});
-  $('c4-device').style.display='block';$('c4-tesla').style.display='none';
-  $('c5-gps').style.display='block';$('c5-tesla').style.display='none';
+  $('c4-tesla').style.display='none';
   dot('hdr-dot','');set('hdr-tesla-txt','Connect Tesla');
   dot('sp-dot','');set('sp-status-txt','연결 안됨');
   $('sp-connected').style.display='none';$('sp-disconnected').style.display='block';
@@ -1089,14 +1428,25 @@ function runDemoStep(idx){
   const delay=next===0?2000:(_DEMO_SCRIPT[next][0]-step[0]);
   _demoTimer=setTimeout(()=>runDemoStep(next),delay);
 }
+const _WX_DEMO=['rain','snow','storm','fog','drizzle',null];
+let _wxDemoIdx=0;
 function toggleDemo(){
   const btn=$('js-demo-btn');
   if(_demoTimer){
     clearTimeout(_demoTimer);_demoTimer=null;
     if(btn){btn.style.color='var(--t2)';}
+    setWeatherEffect(-1); // 이펙트 초기화
   } else {
-    _demoTimer=true; // non-null sentinel before first step
+    _demoTimer=true;
     if(btn){btn.style.color='var(--cyan)';}
+    // 데모 시작 시 날씨 이펙트 순환 (rain → snow → storm → fog → drizzle → 없음)
+    _wxMode=null;
+    setWeatherEffect(_WX_DEMO[_wxDemoIdx%_WX_DEMO.length]==='rain'?61:
+      _WX_DEMO[_wxDemoIdx%_WX_DEMO.length]==='snow'?71:
+      _WX_DEMO[_wxDemoIdx%_WX_DEMO.length]==='storm'?95:
+      _WX_DEMO[_wxDemoIdx%_WX_DEMO.length]==='fog'?45:
+      _WX_DEMO[_wxDemoIdx%_WX_DEMO.length]==='drizzle'?51:-1);
+    _wxDemoIdx++;
     runDemoStep(0);
   }
 }
