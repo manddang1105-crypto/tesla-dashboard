@@ -965,6 +965,40 @@ function updateCompass(heading){
   }
 }
 
+/* GPS 기반 기어 · 출력 추정 */
+const _VM=2003;           // Model Y 공차중량 kg
+let _gStopT=null,_prevVms=0,_kwEMA=0,_prevKwTs=null;
+
+function updateGpsGearKw(kmh,ts){
+  // ── 기어 ──
+  if(kmh>2){
+    if(_gStopT){clearTimeout(_gStopT);_gStopT=null;}
+    setGear('D');
+  } else if(!_gStopT){
+    _gStopT=setTimeout(()=>{
+      setGear('P');_kwEMA=0;_gpsKwDisplay(0);_gStopT=null;
+    },1800);
+  }
+  // ── kW 추정 (P = m·a·v) ──
+  const vMs=kmh/3.6;
+  if(_prevKwTs!==null){
+    const dt=(ts-_prevKwTs)/1000;
+    if(dt>0.3&&dt<5){
+      const a=(vMs-_prevVms)/dt;
+      const raw=_VM*a*vMs/1000;
+      _kwEMA=0.28*Math.max(-380,Math.min(380,raw))+0.72*_kwEMA;
+    }
+  }
+  _prevVms=vMs;_prevKwTs=ts;
+  _gpsKwDisplay(kmh>1?Math.round(_kwEMA):0);
+}
+
+function _gpsKwDisplay(kw){
+  const el=$('js-pwr');if(!el)return;
+  el.textContent=(kw>=0?'+':'')+kw+' kW';
+  el.style.color=kw<-10?'var(--cyan)':kw>80?'var(--amber)':'rgba(255,255,255,0.5)';
+}
+
 /* GPS */
 let wxTs=0,prevLat=null,prevLon=null,prevGpsT=null;
 function startGPS(){
@@ -979,7 +1013,7 @@ function onGPS(p){
   if(sp!=null&&sp>=0){kmh=Math.round(sp*3.6);}
   else if(prevLat!==null){const dt=(ts-prevGpsT)/1000;if(dt>0.5&&dt<8){const d=haversine(prevLat,prevLon,la,lo);const c=(d/dt)*3.6;kmh=c<250?Math.round(c):0;}}
   prevLat=la;prevLon=lo;prevGpsT=ts;
-  if(!isTeslaConnected){setSpeed(kmh);set('js-spd-st',kmh>2?'DRIVING':'STOP');}
+  if(!isTeslaConnected){setSpeed(kmh);set('js-spd-st',kmh>2?'DRIVING':'STOP');updateGpsGearKw(kmh,ts);}
   onTripUpdate(la,lo,kmh);
   if(p.coords.heading!=null&&!isNaN(p.coords.heading))updateCompass(p.coords.heading);
   if(p.coords.altitude!=null)updateAltimeter(p.coords.altitude,p.coords.altitudeAccuracy);
