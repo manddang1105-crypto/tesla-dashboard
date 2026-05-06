@@ -311,11 +311,18 @@ html,body{
   font-size:clamp(48px,11vh,88px);
   font-weight:100;letter-spacing:3px;line-height:1;color:var(--t0);
   font-family:'Anton',Impact,sans-serif;
+  transition:color 3s ease;
 }
 @keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
 .clk-colon{animation:blink 1s step-start infinite}
 .clk-sec{font-size:.60em;color:var(--t2);letter-spacing:1px;vertical-align:middle}
 .clock-date{font-size:clamp(9px,1.6vh,13px);color:var(--t2);letter-spacing:2px;margin-top:clamp(4px,1vh,8px);font-family:'Anton',Impact,sans-serif}
+/* 태양 바 */
+.sun-bar-wrap{width:100%;margin-top:clamp(10px,2vh,16px)}
+.sun-times-row{display:flex;justify-content:space-between;font-family:'Anton',Impact,sans-serif;font-size:clamp(7px,1.1vh,9px);color:var(--t2);letter-spacing:1px;margin-bottom:clamp(4px,.9vh,7px)}
+.sun-track{position:relative;height:2px;background:rgba(255,255,255,0.09);border-radius:2px}
+.sun-fill{position:absolute;left:0;top:0;bottom:0;border-radius:2px;background:linear-gradient(90deg,#FF6B35,#FFD700,#FFA552);width:0%}
+.sun-dot{position:absolute;top:50%;left:0%;width:11px;height:11px;border-radius:50%;transform:translate(-50%,-50%);z-index:1;transition:background 2s,box-shadow 2s}
 
 /* ── 중앙 투명: 카드 너비 동일(35%씩)하면 void 가 정확히 중앙 ── */
 .void{flex:1;pointer-events:none;position:relative}
@@ -638,6 +645,16 @@ html,body{
         <div class="sec-lbl">TIME</div>
         <div class="clock-time"><span id="js-clk-h">--</span><span class="clk-colon">:</span><span id="js-clk-m">--</span><span class="clk-sec"><span class="clk-colon">:</span><span id="js-clk-s">--</span></span></div>
         <div class="clock-date" id="js-dt">----.--.-- (--)</div>
+        <div class="sun-bar-wrap">
+          <div class="sun-times-row">
+            <span id="js-sunrise">SR --:--</span>
+            <span id="js-sunset">SS --:--</span>
+          </div>
+          <div class="sun-track">
+            <div class="sun-fill" id="js-sun-fill"></div>
+            <div class="sun-dot" id="js-sun-dot"></div>
+          </div>
+        </div>
       </div>
 
     </div>
@@ -776,6 +793,58 @@ function tryFS(){const el=document.documentElement;(el.requestFullscreen||el.web
 function toggleFS(){if(!document.fullscreenElement&&!document.webkitFullscreenElement)tryFS();else(document.exitFullscreen||document.webkitExitFullscreen)?.call(document)}
 document.addEventListener('fullscreenchange',()=>{$('js-fs').textContent=document.fullscreenElement?'✕':'⛶'});
 
+/* 일출/일몰 + 시간대 색상 */
+let _sunRise=null,_sunSet=null,_sunLat=null,_sunLon=null;
+function _sinD(d){return Math.sin(d*Math.PI/180)}
+function _cosD(d){return Math.cos(d*Math.PI/180)}
+
+function calcSunTimes(lat,lon){
+  const JD=Date.now()/86400000+2440587.5;
+  const n=Math.round(JD-2451545.0-0.0009-lon/360);
+  const Js=2451545.0+0.0009+lon/360+n;
+  const M=((357.5291+0.98560028*(Js-2451545))%360+360)%360;
+  const C=1.9148*_sinD(M)+0.0200*_sinD(2*M)+0.0003*_sinD(3*M);
+  const λ=(M+C+180+102.9372)%360;
+  const Jt=Js+0.0053*_sinD(M)-0.0069*_sinD(2*λ);
+  const sinδ=_sinD(λ)*_sinD(23.4397);
+  const cosω=(_sinD(-0.8333)-_sinD(lat)*sinδ)/(_cosD(lat)*Math.sqrt(1-sinδ*sinδ));
+  if(Math.abs(cosω)>=1)return null;
+  const ω=Math.acos(cosω)*180/Math.PI;
+  const toDate=jd=>new Date((jd-2440587.5)*86400000);
+  return{rise:toDate(Jt-ω/360),set:toDate(Jt+ω/360)};
+}
+
+function updateSunBar(){
+  if(!_sunRise||!_sunSet)return;
+  const now=Date.now(),rise=_sunRise.getTime(),set=_sunSet.getTime();
+  const dayLen=set-rise;
+  let pct=dayLen>0?(now-rise)/dayLen:0;
+  pct=Math.max(0,Math.min(1,pct));
+  const isDay=now>=rise&&now<=set;
+  const fill=$('js-sun-fill'),dot=$('js-sun-dot');
+  if(fill)fill.style.width=(pct*100)+'%';
+  if(dot){
+    dot.style.left=(pct*100)+'%';
+    if(isDay){
+      dot.style.background='#FFE566';
+      dot.style.boxShadow='0 0 8px rgba(255,210,80,.95),0 0 20px rgba(255,160,40,.5)';
+    } else {
+      dot.style.background='#B0BEFF';
+      dot.style.boxShadow='0 0 8px rgba(150,170,255,.75),0 0 16px rgba(100,130,255,.35)';
+    }
+  }
+}
+
+function getClockColor(h){
+  if(h< 5)return'rgba(130,152,218,.85)'; // 심야 — 차분한 블루
+  if(h< 7)return'#C9A0FF';               // 새벽 — 라벤더
+  if(h< 9)return'#FF9A5C';               // 아침 — 웜 오렌지
+  if(h<17)return'#FFFFFF';               // 낮   — 흰색
+  if(h<20)return'#FFD166';               // 저녁 — 골든
+  if(h<22)return'#FF8C5A';               // 황혼 — 딥 오렌지
+  return'rgba(130,152,218,.85)';         // 밤   — 블루
+}
+
 /* 시계 */
 const DAYS=['SUN','MON','TUE','WED','THU','FRI','SAT'];
 function tick(){
@@ -783,6 +852,10 @@ function tick(){
   set('js-clk-h',pad(d.getHours()));set('js-clk-m',pad(d.getMinutes()));set('js-clk-s',pad(d.getSeconds()));
   set('js-dt',d.getFullYear()+'.'+pad(d.getMonth()+1)+'.'+pad(d.getDate())+' ('+DAYS[d.getDay()]+')');
   updateTripTime();
+  updateSunBar();
+  // 시간대별 시계 색상
+  const ct=$('js-clk-h');
+  if(ct&&ct.parentElement)ct.parentElement.style.color=getClockColor(d.getHours());
 }
 setInterval(tick,1000);tick();
 
@@ -1013,6 +1086,16 @@ function onGPS(p){
   if(sp!=null&&sp>=0){kmh=Math.round(sp*3.6);}
   else if(prevLat!==null){const dt=(ts-prevGpsT)/1000;if(dt>0.5&&dt<8){const d=haversine(prevLat,prevLon,la,lo);const c=(d/dt)*3.6;kmh=c<250?Math.round(c):0;}}
   prevLat=la;prevLon=lo;prevGpsT=ts;
+  // 일출/일몰 계산 (위치 변화 0.05° 이상일 때 갱신)
+  if(_sunLat===null||Math.abs(la-_sunLat)>0.05||Math.abs(lo-_sunLon)>0.05){
+    _sunLat=la;_sunLon=lo;
+    const st=calcSunTimes(la,lo);
+    if(st){
+      _sunRise=st.rise;_sunSet=st.set;
+      set('js-sunrise','↑ '+pad(_sunRise.getHours())+':'+pad(_sunRise.getMinutes()));
+      set('js-sunset','↓ '+pad(_sunSet.getHours())+':'+pad(_sunSet.getMinutes()));
+    }
+  }
   if(!isTeslaConnected){setSpeed(kmh);set('js-spd-st',kmh>2?'DRIVING':'STOP');updateGpsGearKw(kmh,ts);}
   onTripUpdate(la,lo,kmh);
   if(p.coords.heading!=null&&!isNaN(p.coords.heading))updateCompass(p.coords.heading);
