@@ -7,6 +7,8 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <link href="https://fonts.googleapis.com/css2?family=Anton&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>Tesla Model Y · Dashboard</title>
@@ -324,29 +326,69 @@ html,body{
 .sun-fill{position:absolute;left:0;top:0;bottom:0;border-radius:2px;background:linear-gradient(90deg,#FF6B35,#FFD700,#FFA552);width:0%}
 .sun-dot{position:absolute;top:50%;left:0%;width:11px;height:11px;border-radius:50%;transform:translate(-50%,-50%);z-index:1;transition:background 2s,box-shadow 2s}
 
-/* ── 중앙 투명: 카드 너비 동일(35%씩)하면 void 가 정확히 중앙 ── */
-.void{flex:1;pointer-events:none;position:relative}
+/* ── 중앙: 지도 ── */
+.void{
+  flex:1;position:relative;
+  border-radius:18px;overflow:hidden;
+  border:1px solid var(--gb);
+  pointer-events:auto;
+  min-width:0;
+}
+#js-map{
+  position:absolute;inset:0;
+  width:100%;height:100%;
+  z-index:1;
+  opacity:0.82;
+}
+/* Leaflet 기본 UI 숨김 */
+.leaflet-control-zoom,.leaflet-control-attribution{display:none!important}
+/* 테슬라 로고 오버레이 (지도 위) */
 .tesla-logo-wrap{
-  position:absolute;bottom:18px;left:50%;transform:translateX(-50%);
-  width:clamp(54px,7vw,90px);pointer-events:none;
+  position:absolute;bottom:12px;left:50%;transform:translateX(-50%);
+  width:clamp(36px,4.5vw,58px);pointer-events:none;
   display:flex;flex-direction:column;align-items:center;
+  z-index:10;
+  filter:drop-shadow(0 0 8px rgba(0,0,0,0.9));
 }
-.tesla-logo-img{
-  width:100%;display:block;
-  opacity:0.85;
-}
+.tesla-logo-img{width:100%;display:block;opacity:0.70;}
 .copy-txt{
-  text-align:center;
-  margin-top:7px;
-  font-size:9px;
-  letter-spacing:3px;
-  color:rgba(255,255,255,0.25);
+  text-align:center;margin-top:4px;
+  font-size:8px;letter-spacing:2px;
+  color:rgba(255,255,255,0.18);
+  font-family:'Anton',Impact,sans-serif;white-space:nowrap;
+}
+/* 현재 위치 마커 */
+.map-marker{
+  width:16px;height:16px;
+  background:var(--red);
+  border:2px solid #fff;
+  border-radius:50%;
+  box-shadow:0 0 0 4px rgba(227,25,55,0.35),0 0 18px rgba(227,25,55,0.6);
+}
+/* heading 화살표 오버레이 */
+.map-heading-arrow{
+  width:0;height:0;
+  border-left:7px solid transparent;
+  border-right:7px solid transparent;
+  border-bottom:18px solid rgba(0,220,255,0.85);
+  filter:drop-shadow(0 0 6px rgba(0,220,255,0.7));
+  transform-origin:50% 100%;
+}
+/* 지도 위 좌표 HUD */
+.map-hud{
+  position:absolute;top:8px;left:50%;transform:translateX(-50%);
+  z-index:10;pointer-events:none;
   font-family:'Anton',Impact,sans-serif;
+  font-size:clamp(7px,1vh,9px);
+  letter-spacing:1px;
+  color:rgba(255,255,255,0.55);
+  background:rgba(0,0,0,0.45);
+  padding:3px 8px;border-radius:6px;
   white-space:nowrap;
 }
 
 /* ── 오른쪽: 날씨 + 배터리 + 위치 — 3섹션이 균등하게 카드를 꽉 채움 ── */
-.card-right{width:35%;justify-content:space-between}
+.card-right{width:35%;justify-content:flex-start}
 
 /* flex:1 1 0 + min-height:0 + overflow:hidden → 창 줄여도 서로 간섭 없음 */
 .r-section{
@@ -357,21 +399,65 @@ html,body{
 }
 .r-divider{height:1px;background:rgba(255,255,255,0.07);flex-shrink:0}
 
-/* ── 나침반 ── */
-.batt-compass-row{
-  flex-direction:row !important;
-  align-items:flex-start;
-  gap:clamp(6px,1.5vw,14px);
+/* ── 트립+날씨 상단 섹션 ── */
+.r-top-section{
+  flex:0 0 auto !important;
+  flex-shrink:0 !important;
+  flex-direction:column !important;
+  align-items:stretch !important;
+  justify-content:flex-start !important;
+  gap:clamp(5px,1vh,8px);
 }
+.r-top-row{
+  display:flex;flex-direction:row;
+  align-items:flex-start;
+  gap:0;
+  width:100%;
+}
+/* 트립/날씨 컬럼 사이 세로 구분선 */
+.r-top-row .batt-col{
+  border-right:1px solid rgba(255,255,255,0.07);
+  padding-right:clamp(6px,1.2vw,12px);
+  margin-right:clamp(6px,1.2vw,12px);
+}
+/* 통합 4칸 스탯 바 */
+.r-stats-row{
+  display:flex;gap:clamp(4px,.8vw,7px);width:100%;
+}
+.r-stat-card{
+  flex:1;
+  background:rgba(255,255,255,0.045);
+  border:1px solid rgba(255,255,255,0.07);
+  border-radius:8px;
+  padding:clamp(5px,.9vh,8px) clamp(3px,.6vw,6px);
+  display:flex;flex-direction:column;align-items:center;
+  gap:clamp(1px,.3vh,2px);
+  min-width:0;
+}
+.r-stat-lbl{font-family:'Anton',Impact,sans-serif;font-size:clamp(7px,1vh,9px);letter-spacing:2px;color:var(--t2)}
+.r-stat-val{font-family:'Anton',Impact,sans-serif;font-size:clamp(15px,2.8vh,22px);line-height:1.1;color:var(--t0)}
+.r-stat-sub{font-family:'Anton',Impact,sans-serif;font-size:clamp(7px,1.1vh,10px);letter-spacing:1px;color:var(--t1)}
+.r-stat-bar{width:100%;height:3px;background:rgba(255,255,255,0.09);border-radius:2px;overflow:hidden;margin-top:clamp(2px,.4vh,3px)}
+.r-stat-fill{height:100%;border-radius:2px;width:0%;transition:width .7s cubic-bezier(.2,0,.4,1),background .5s}
+
+/* ── 나침반 ── */
 .batt-col{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;text-align:center;padding-top:clamp(4px,1vh,10px)}
+
+/* ── wx-alt-row 공통 내부 컨텐츠 래퍼 (타이틀 아래 내용을 세로 중앙 정렬) ── */
+.wx-col-inner{
+  flex:1;min-height:0;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  gap:clamp(2px,.5vh,5px);
+}
 
 /* ── 나침반 (heading tape) ── */
 .compass-wrap{
   flex:1;min-width:0;
   display:flex;flex-direction:column;
-  align-items:center;justify-content:center;
+  align-items:center;justify-content:flex-start;
   text-align:center;
-  gap:clamp(2px,.5vh,5px);
+  gap:0;
 }
 .htape-outer{
   position:relative;
@@ -419,7 +505,7 @@ html,body{
 .htape-line.hc{height:clamp(8px,1.5vh,12px);background:var(--cyan)}
 .htape-line.hd{height:clamp(5px,1vh,8px);background:rgba(255,255,255,.22)}
 /* readout */
-.compass-readout{display:flex;align-items:baseline;gap:clamp(4px,.8vw,8px)}
+.compass-readout{position:relative;display:flex;align-items:baseline;justify-content:center}
 .compass-dir{
   font-family:'Anton',Impact,sans-serif;
   font-size:clamp(48px,11vh,88px);
@@ -432,6 +518,7 @@ html,body{
 }
 .compass-dir.flip{animation:dirBurst .38s cubic-bezier(.34,1.2,.64,1) forwards}
 .compass-deg{
+  position:absolute;left:100%;bottom:0;padding-left:clamp(3px,.4vw,5px);white-space:nowrap;
   font-family:'Anton',Impact,sans-serif;
   font-size:clamp(9px,1.6vh,13px);
   color:var(--t2);letter-spacing:2px;
@@ -444,20 +531,21 @@ html,body{
 }
 
 /* 날씨 */
-.wx-alt-row{flex-direction:row !important;align-items:center;gap:clamp(6px,1.5vw,14px)}
+.wx-alt-row{flex-direction:row !important;align-items:stretch;gap:clamp(6px,1.5vw,14px);padding-top:clamp(4px,1vh,8px)}
 .wx-col{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;text-align:center;padding-top:clamp(4px,1vh,10px)}
-.wx-temp{font-size:clamp(48px,11vh,88px);font-weight:100;line-height:1;color:var(--t0);font-family:'Anton',Impact,sans-serif}
-.wx-desc{font-size:clamp(10px,1.8vh,17px);color:var(--t1);margin-top:clamp(2px,.6vh,4px);font-family:'Anton',Impact,sans-serif;letter-spacing:1px}
-.wx-detail{display:flex;gap:clamp(4px,1vw,8px);margin-top:clamp(6px,1.2vh,10px);width:100%;justify-content:center}
+.wx-loc{font-family:'Anton',Impact,sans-serif;font-size:clamp(8px,1.3vh,11px);letter-spacing:2px;color:var(--cyan);margin-bottom:clamp(1px,.3vh,3px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.wx-temp{font-size:clamp(38px,8vh,68px);font-weight:100;line-height:1;color:var(--t0);font-family:'Anton',Impact,sans-serif}
+.wx-desc{font-size:clamp(9px,1.5vh,14px);color:var(--t1);margin-top:clamp(1px,.4vh,3px);font-family:'Anton',Impact,sans-serif;letter-spacing:1px}
+.wx-detail{display:flex;gap:clamp(4px,1vw,8px);margin-top:clamp(4px,.8vh,7px);width:100%;justify-content:center}
 .wx-d{display:flex;flex-direction:column;align-items:center}
 .wx-d-lbl{font-size:clamp(7px,1.1vh,9px);letter-spacing:2px;color:var(--t2);font-family:'Anton',Impact,sans-serif}
-.wx-d-val{font-size:clamp(10px,1.8vh,14px);font-weight:300;color:var(--t1);font-family:'Anton',Impact,sans-serif}
+.wx-d-val{font-size:clamp(10px,1.6vh,13px);font-weight:300;color:var(--t1);font-family:'Anton',Impact,sans-serif}
 /* 고도계 */
 .alt-wrap{
   flex:1;min-width:0;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  display:flex;flex-direction:column;align-items:center;justify-content:flex-start;
   text-align:center;
-  gap:clamp(2px,.5vh,5px);
+  gap:0;
 }
 .alt-num{
   font-family:'Anton',Impact,sans-serif;
@@ -492,7 +580,8 @@ html,body{
 .trip-dot{display:inline-block;width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,.18);margin-right:5px;vertical-align:middle;transition:background .4s,box-shadow .4s}
 .trip-dot.active{background:var(--cyan);box-shadow:0 0 8px var(--cyan);animation:tripPulse 1.2s ease-in-out infinite}
 .trip-dist{font-family:'Anton',Impact,sans-serif;font-size:clamp(36px,8vh,70px);font-weight:100;line-height:1;color:var(--t0);letter-spacing:-1px}
-.trip-dist-unit{font-family:'Anton',Impact,sans-serif;font-size:clamp(9px,1.5vh,12px);color:var(--t2);letter-spacing:2px;vertical-align:middle;margin-left:3px}
+.trip-num-wrap{position:relative;display:inline-flex;align-items:baseline;justify-content:center}
+.trip-dist-unit{position:absolute;left:100%;bottom:0;padding-left:3px;white-space:nowrap;font-family:'Anton',Impact,sans-serif;font-size:clamp(9px,1.5vh,12px);color:var(--t2);letter-spacing:2px}
 .trip-time{font-family:'Anton',Impact,sans-serif;font-size:clamp(12px,2.2vh,17px);color:var(--cyan);letter-spacing:2px;margin:clamp(3px,.8vh,7px) 0}
 .trip-stats{display:flex;gap:clamp(4px,.8vw,7px);width:100%}
 .trip-stat{flex:1;display:flex;flex-direction:column;align-items:center;background:rgba(255,255,255,0.045);border-radius:8px;padding:clamp(3px,.7vh,6px) clamp(3px,.8vw,7px)}
@@ -558,12 +647,113 @@ html,body{
 .sp-err.show{display:block}
 .sp-note{font-size:10px;color:var(--t2);line-height:1.7;margin-top:12px;padding-top:12px;border-top:1px solid #181818}
 
+/* ── 주행 모드 오버레이 ── */
+#js-drive-ov{
+  position:fixed;inset:0;z-index:50;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  opacity:0;pointer-events:none;
+  transition:opacity .55s cubic-bezier(.4,0,.2,1);
+}
+#js-drive-ov.active{opacity:1;}
+.dov-center{
+  flex:1;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+}
+.dov-spd-num{
+  font-family:'Anton',Impact,sans-serif;
+  font-size:clamp(120px,28vw,230px);
+  line-height:1;letter-spacing:-6px;color:#fff;
+  font-variant-numeric:tabular-nums;
+  text-shadow:0 0 80px rgba(255,255,255,0.12);
+}
+.dov-spd-unit{
+  font-family:'Anton',Impact,sans-serif;
+  font-size:clamp(11px,1.6vw,18px);
+  letter-spacing:6px;color:var(--t2);
+  margin-top:clamp(4px,1vh,10px);
+}
+.dov-info-row{
+  display:flex;align-items:center;gap:clamp(14px,2.5vw,28px);
+  margin-top:clamp(12px,2.2vh,22px);
+}
+.dov-gear{font-family:'Anton',Impact,sans-serif;font-size:clamp(20px,3.2vw,30px);color:var(--red)}
+.dov-sep{font-size:clamp(16px,2vw,22px);color:var(--t2)}
+.dov-kw{font-family:'Anton',Impact,sans-serif;font-size:clamp(20px,3.2vw,30px);color:var(--green)}
+.dov-strip{
+  display:flex;justify-content:center;gap:clamp(20px,5vw,60px);
+  width:100%;
+  padding:clamp(12px,2.2vh,20px) clamp(24px,5vw,60px);
+  background:linear-gradient(0deg,rgba(0,0,0,0.75) 0%,transparent 100%);
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  border-top:1px solid rgba(255,255,255,0.07);
+}
+.dov-si{display:flex;flex-direction:column;align-items:center;gap:4px}
+.dov-si-lbl{font-family:'Anton',Impact,sans-serif;font-size:clamp(7px,1vh,9px);letter-spacing:3px;color:var(--t2)}
+.dov-si-val{font-family:'Anton',Impact,sans-serif;font-size:clamp(16px,2.8vw,22px);color:var(--t0);letter-spacing:1px}
+.dov-bar-wrap{position:absolute;bottom:0;left:0;right:0;height:4px;background:rgba(255,255,255,0.08)}
+.dov-bar-fill{height:100%;width:0%;background:linear-gradient(90deg,#00dcff,#00ff99);position:relative;overflow:visible}
+/* 오버레이 숫자 모션 — 기존 애니메이션 재사용 */
+.dov-spd-num.punch{animation:spdPunch .40s cubic-bezier(.34,1.35,.64,1) forwards}
+.dov-spd-num.brake{animation:spdBrake .32s ease-out forwards}
+.dov-spd-num.idle{animation:spdIdle 2.4s ease-in-out infinite}
+/* 오버레이 바 tip dot */
+.dov-bar-fill.driving::after{
+  content:'';position:absolute;right:-4px;top:50%;
+  transform:translateY(-50%);
+  width:20px;height:20px;border-radius:50%;
+  background:white;filter:blur(7px);
+  animation:tipPulse .75s ease-in-out infinite alternate;
+}
+.dov-bar-fill.driving::before{
+  content:'';position:absolute;right:-10px;top:50%;
+  transform:translateY(-50%);
+  width:34px;height:34px;border-radius:50%;
+  border:1.5px solid rgba(255,255,255,0.18);
+  box-shadow:0 0 10px rgba(255,255,255,0.15);
+  animation:tipHalo .75s ease-in-out infinite alternate;
+}
+.dov-bar-fill.burst{animation:gaugeBurst .42s ease-out forwards}
+/* 배경 카드 페이드 */
+.card-left,.void,.card-right{transition:opacity .5s cubic-bezier(.4,0,.2,1),transform .5s cubic-bezier(.4,0,.2,1)}
+.drive-mode .card-left{opacity:0;transform:translateX(-28px);pointer-events:none}
+.drive-mode .void{opacity:0;pointer-events:none}
+.drive-mode .card-right{opacity:0;transform:translateX(28px);pointer-events:none}
+.drive-mode .strip{opacity:0;transition:opacity .5s;pointer-events:none}
+
+/* ── G-force 게이지 ── */
+.g-wrap{
+  flex:1.3;min-width:0;
+  display:flex;flex-direction:column;align-items:center;justify-content:flex-start;
+  text-align:center;gap:0;
+}
+.g-canvas-outer{
+  width:100%;max-width:clamp(72px,13vh,118px);
+  aspect-ratio:1;position:relative;
+}
+#js-g-canvas{width:100%;height:100%;display:block;}
+.g-readout{position:relative;display:flex;align-items:baseline;justify-content:center;margin-top:1px}
+.g-cur-val{
+  font-family:'Anton',Impact,sans-serif;
+  font-size:clamp(18px,3.5vh,28px);line-height:1;color:var(--t0);
+  transition:color .25s;
+}
+.g-unit-lbl{position:absolute;left:100%;bottom:0;padding-left:2px;white-space:nowrap;font-family:'Anton',Impact,sans-serif;font-size:clamp(8px,1.3vh,11px);color:var(--t2);letter-spacing:2px}
+.g-peak-lbl{font-family:'Anton',Impact,sans-serif;font-size:clamp(6px,.95vh,8px);color:var(--t2);letter-spacing:2px}
+.g-perm-btn{
+  font-family:'Anton',Impact,sans-serif;font-size:clamp(7px,1vh,9px);
+  letter-spacing:2px;color:var(--cyan);
+  cursor:pointer;margin-top:3px;
+  padding:3px 8px;border-radius:6px;border:1px solid rgba(0,220,255,0.3);
+}
+
 /* ── GPS 오버레이 ── */
 .gps-ov{position:fixed;inset:0;z-index:700;background:rgba(0,0,0,.97);display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px}
 .gps-ov.show{display:flex}
 .gps-ov-title{font-size:15px;font-weight:300;letter-spacing:2px}
 .gps-ov-sub{font-size:12px;color:var(--t1);text-align:center;line-height:2;max-width:260px}
 .gps-ov-btn{background:var(--red);border:none;color:#fff;padding:11px 28px;border-radius:24px;font-size:13px;letter-spacing:1px;cursor:pointer;margin-top:4px}
+
 </style>
 </head>
 <body>
@@ -620,6 +810,26 @@ html,body{
 <!-- DASHBOARD -->
 <div class="root">
 
+  <!-- 주행 모드 오버레이 -->
+  <div id="js-drive-ov">
+    <div class="dov-center">
+      <div class="dov-spd-num" id="dov-spd">0</div>
+      <div class="dov-spd-unit">KM / H</div>
+      <div class="dov-info-row">
+        <span class="dov-gear" id="dov-gear">P</span>
+        <span class="dov-sep">·</span>
+        <span class="dov-kw" id="dov-kw">— kW</span>
+      </div>
+    </div>
+    <div class="dov-strip">
+      <div class="dov-si"><div class="dov-si-lbl">WEATHER</div><div class="dov-si-val" id="dov-wx">--</div></div>
+      <div class="dov-si"><div class="dov-si-lbl">TIME</div><div class="dov-si-val" id="dov-time">--:--</div></div>
+      <div class="dov-si"><div class="dov-si-lbl">TRIP</div><div class="dov-si-val" id="dov-trip">--</div></div>
+      <div class="dov-si"><div class="dov-si-lbl">ALT</div><div class="dov-si-val" id="dov-alt">--</div></div>
+      <div class="dov-si"><div class="dov-si-lbl">HEADING</div><div class="dov-si-val" id="dov-dir-ov">--</div></div>
+    </div>
+    <div class="dov-bar-wrap"><div class="dov-bar-fill" id="dov-bar"></div></div>
+  </div>
 
   <div class="main">
 
@@ -659,8 +869,10 @@ html,body{
 
     </div>
 
-    <!-- 중앙: 투명 -->
+    <!-- 중앙: 지도 -->
     <div class="void">
+      <div id="js-map"></div>
+      <div class="map-hud" id="js-map-hud">GPS 대기중...</div>
       <div class="tesla-logo-wrap">
         <img class="tesla-logo-img" src="tesla-logo.png" alt="Tesla">
         <div class="copy-txt">COPYRIGHT BY MINTAE.KIM</div>
@@ -670,51 +882,46 @@ html,body{
     <!-- 오른쪽: 날씨 + 배터리 + 위치 -->
     <div class="card card-right">
 
-      <!-- 배터리 + 날씨 섹션 (위) -->
-      <div class="r-section batt-compass-row">
+      <!-- 나침반 + 고도계 섹션 (위) -->
+      <div class="r-section wx-alt-row">
 
-        <!-- 배터리 (왼쪽) -->
-        <div class="batt-col">
-          <div class="sec-lbl"><span class="trip-dot" id="js-trip-dot"></span>TRIP</div>
-          <div><span class="trip-dist" id="js-trip-dist">0.0</span><span class="trip-dist-unit">KM</span></div>
-          <div class="trip-time" id="js-trip-time">00:00:00</div>
-          <div class="trip-stats">
-            <div class="trip-stat">
-              <div class="trip-stat-lbl">AVG</div>
-              <div class="trip-stat-val" id="js-trip-avg">—</div>
-              <div class="trip-stat-unit">km/h</div>
+        <!-- 나침반 (왼쪽) -->
+        <div class="compass-wrap">
+          <div class="sec-lbl">HEADING</div>
+          <div class="wx-col-inner">
+            <div class="compass-readout">
+              <span class="compass-dir" id="js-dir">--</span>
+              <span class="compass-deg" id="js-deg">---°</span>
             </div>
-            <div class="trip-stat">
-              <div class="trip-stat-lbl">MAX</div>
-              <div class="trip-stat-val" id="js-trip-max">—</div>
-              <div class="trip-stat-unit">km/h</div>
+            <div class="htape-outer">
+              <div class="htape-inner" id="js-htape"></div>
             </div>
-          </div>
-          <button class="trip-reset" onclick="resetTrip()">↺ RESET</button>
-          <!-- Tesla 배터리 (연결 시 보조 표시) -->
-          <div id="c4-tesla" style="display:none;width:100%;margin-top:clamp(6px,1.2vh,10px)">
-            <div class="batt-bar-wrap" style="margin:0 0 4px"><div class="batt-fill" id="tesla-batt-bar" style="width:0%"></div></div>
-            <div style="display:flex;justify-content:space-between;align-items:baseline">
-              <span id="tesla-batt-pct" class="batt-sub">--%</span>
-              <span id="tesla-batt-range" class="batt-sub" style="opacity:.6;font-size:clamp(8px,1.3vh,11px)">-- km</span>
-            </div>
-            <div id="tesla-batt-st" class="batt-sub" style="font-size:clamp(7px,1.1vh,9px);opacity:.45;margin-top:2px"></div>
           </div>
         </div>
 
-        <!-- 날씨 (오른쪽) -->
-        <div class="wx-col">
-          <div class="sec-lbl">WEATHER</div>
-          <div class="wx-temp" id="js-tmp">--°</div>
-          <div class="wx-desc" id="js-dsc">--</div>
-          <div class="wx-detail">
-            <div class="wx-d"><div class="wx-d-lbl">FEELS LIKE</div><div class="wx-d-val" id="js-feel">--°</div></div>
-            <div class="wx-d"><div class="wx-d-lbl">HUMIDITY</div><div class="wx-d-val" id="js-hum">--%</div></div>
-            <div class="wx-d"><div class="wx-d-lbl">WIND</div><div class="wx-d-val" id="js-wnd">--</div></div>
+        <!-- 고도계 (중앙) -->
+        <div class="alt-wrap">
+          <div class="sec-lbl">ALTITUDE</div>
+          <div class="wx-col-inner">
+            <div class="alt-num" id="js-alt">--</div>
+            <div class="alt-unit">M</div>
+            <div class="alt-acc" id="js-alt-acc"></div>
           </div>
-          <div class="wx-detail" style="margin-top:clamp(4px,1vh,8px)">
-            <div class="wx-d"><div class="wx-d-lbl">UV IDX</div><div class="wx-d-val" id="js-uv" style="color:var(--t2)">--</div></div>
-            <div class="wx-d"><div class="wx-d-lbl">AQI</div><div class="wx-d-val" id="js-aqi" style="color:var(--t2)">--</div></div>
+        </div>
+
+        <!-- G-force 게이지 (오른쪽) -->
+        <div class="g-wrap">
+          <div class="sec-lbl">G-FORCE</div>
+          <div class="wx-col-inner">
+            <div class="g-canvas-outer">
+              <canvas id="js-g-canvas"></canvas>
+            </div>
+            <div class="g-readout">
+              <span class="g-cur-val" id="js-g-cur">0.00</span>
+              <span class="g-unit-lbl">G</span>
+            </div>
+            <div class="g-peak-lbl" id="js-g-peak">PEAK 0.00G</div>
+            <div class="g-perm-btn" id="js-g-perm" onclick="requestGPermission()" style="display:none">TAP TO ENABLE</div>
           </div>
         </div>
 
@@ -722,27 +929,68 @@ html,body{
 
       <div class="r-divider"></div>
 
-      <!-- 나침반 + 고도계 섹션 (아래) -->
-      <div class="r-section wx-alt-row">
+      <!-- 트립 + 날씨 섹션 (아래) -->
+      <div class="r-section r-top-section">
 
-        <!-- 나침반 (왼쪽) -->
-        <div class="compass-wrap">
-          <div class="sec-lbl">HEADING</div>
-          <div class="compass-readout">
-            <span class="compass-dir" id="js-dir">--</span>
-            <span class="compass-deg" id="js-deg">---°</span>
+        <!-- 상단: 트립 주요정보 + 날씨 주요정보 -->
+        <div class="r-top-row">
+
+          <!-- 트립 (왼쪽) -->
+          <div class="batt-col">
+            <div class="sec-lbl"><span class="trip-dot" id="js-trip-dot"></span>TRIP</div>
+            <div class="trip-num-wrap"><span class="trip-dist" id="js-trip-dist">0.0</span><span class="trip-dist-unit">KM</span></div>
+            <div class="trip-time" id="js-trip-time">00:00:00</div>
+            <button class="trip-reset" onclick="resetTrip()">↺ RESET</button>
+            <!-- Tesla 배터리 (연결 시 보조 표시) -->
+            <div id="c4-tesla" style="display:none;width:100%;margin-top:clamp(4px,.8vh,8px)">
+              <div class="batt-bar-wrap" style="margin:0 0 4px"><div class="batt-fill" id="tesla-batt-bar" style="width:0%"></div></div>
+              <div style="display:flex;justify-content:space-between;align-items:baseline">
+                <span id="tesla-batt-pct" class="batt-sub">--%</span>
+                <span id="tesla-batt-range" class="batt-sub" style="opacity:.6;font-size:clamp(8px,1.3vh,11px)">-- km</span>
+              </div>
+              <div id="tesla-batt-st" class="batt-sub" style="font-size:clamp(7px,1.1vh,9px);opacity:.45;margin-top:2px"></div>
+            </div>
           </div>
-          <div class="htape-outer">
-            <div class="htape-inner" id="js-htape"></div>
+
+          <!-- 날씨 (오른쪽) -->
+          <div class="wx-col">
+            <div class="sec-lbl">WEATHER</div>
+            <div class="wx-loc" id="js-wx-loc">--</div>
+            <div class="wx-temp" id="js-tmp">--°</div>
+            <div class="wx-desc" id="js-dsc">--</div>
+            <div class="wx-detail">
+              <div class="wx-d"><div class="wx-d-lbl">FEELS LIKE</div><div class="wx-d-val" id="js-feel">--°</div></div>
+              <div class="wx-d"><div class="wx-d-lbl">HUMIDITY</div><div class="wx-d-val" id="js-hum">--%</div></div>
+              <div class="wx-d"><div class="wx-d-lbl">WIND</div><div class="wx-d-val" id="js-wnd">--</div></div>
+            </div>
           </div>
+
         </div>
 
-        <!-- 고도계 (오른쪽) -->
-        <div class="alt-wrap">
-          <div class="sec-lbl">ALTITUDE</div>
-          <div class="alt-num" id="js-alt">--</div>
-          <div class="alt-unit">M</div>
-          <div class="alt-acc" id="js-alt-acc"></div>
+        <!-- 하단: AVG · MAX · UV · AQI 통합 4칸 -->
+        <div class="r-stats-row">
+          <div class="r-stat-card">
+            <div class="r-stat-lbl">AVG</div>
+            <div class="r-stat-val" id="js-trip-avg">—</div>
+            <div class="r-stat-sub">km/h</div>
+          </div>
+          <div class="r-stat-card">
+            <div class="r-stat-lbl">MAX</div>
+            <div class="r-stat-val" id="js-trip-max">—</div>
+            <div class="r-stat-sub">km/h</div>
+          </div>
+          <div class="r-stat-card">
+            <div class="r-stat-lbl">UV IDX</div>
+            <div class="r-stat-val" id="js-uv">--</div>
+            <div class="r-stat-sub" id="js-uv-grade">--</div>
+            <div class="r-stat-bar"><div class="r-stat-fill" id="js-uv-bar"></div></div>
+          </div>
+          <div class="r-stat-card">
+            <div class="r-stat-lbl">AQI</div>
+            <div class="r-stat-val" id="js-aqi">--</div>
+            <div class="r-stat-sub" id="js-aqi-grade">--</div>
+            <div class="r-stat-bar"><div class="r-stat-fill" id="js-aqi-bar"></div></div>
+          </div>
         </div>
 
       </div>
@@ -761,6 +1009,7 @@ html,body{
     <div class="sitem"><div class="sdot" id="js-ndot"></div><span id="js-nst">Network</span></div>
     <div class="sitem"><div class="sdot" id="js-gdot"></div><span id="js-gst">GPS</span></div>
     <div class="sitem" id="js-upd">—</div>
+    <div class="sitem" id="js-drive-btn" onclick="toggleDriveOverlay()" style="cursor:pointer;color:var(--cyan);letter-spacing:2px;font-family:'Anton',Impact,sans-serif;font-size:clamp(8px,1.3vh,11px)">50K·OV</div>
     <div class="sitem" id="js-demo-btn" onclick="toggleDemo()" style="cursor:pointer;color:var(--t2);letter-spacing:2px;font-family:'Anton',Impact,sans-serif;font-size:clamp(8px,1.3vh,11px)">DEMO</div>
     <div class="fs-btn" id="js-fs" style="position:static;width:auto;height:auto;background:none;border:none;padding:0">⛶</div>
   </div>
@@ -778,6 +1027,8 @@ const AUTH='https://fleet-auth.prd.vn.cloud.tesla.com/oauth2/v3';
 const TAPI='https://fleet-api.prd.na.vn.cloud.tesla.com';
 let teslaTimer=null,isTeslaConnected=false,pollInterval=30000;
 let _tripDist=0,_tripStart=null,_tripSpdSamples=[],_tripMaxSpd=0,_tripPLat=null,_tripPLon=null;
+let _driveMode=false,_driveModeTimer=null,_driveModeOn=true;
+const _DRIVE_ENTER_SPD=10,_DRIVE_EXIT_DELAY=2500;
 
 function $(id){return document.getElementById(id)}
 function set(id,v){const e=$(id);if(e)e.textContent=v}
@@ -853,9 +1104,9 @@ function tick(){
   set('js-dt',d.getFullYear()+'.'+pad(d.getMonth()+1)+'.'+pad(d.getDate())+' ('+DAYS[d.getDay()]+')');
   updateTripTime();
   updateSunBar();
-  // 시간대별 시계 색상
   const ct=$('js-clk-h');
   if(ct&&ct.parentElement)ct.parentElement.style.color=getClockColor(d.getHours());
+  if(_driveMode)_dovTime();
 }
 setInterval(tick,1000);tick();
 
@@ -925,6 +1176,39 @@ function setSpeed(kmh){
     }
   }
   _prevSpd=kmh;
+  // 오버레이 숫자 애니메이션 미러
+  const dovNum=$('dov-spd');
+  if(dovNum){
+    if(kmh===0){
+      dovNum.classList.remove('punch','brake');
+      if(!dovNum.classList.contains('idle'))dovNum.classList.add('idle');
+    } else {
+      dovNum.classList.remove('idle');
+      if(rising&&delta>=4&&kmh>2){
+        dovNum.classList.remove('punch','brake');void dovNum.offsetWidth;
+        dovNum.classList.add('punch');setTimeout(()=>dovNum.classList.remove('punch'),440);
+      } else if(!rising&&delta>=10){
+        dovNum.classList.remove('punch','brake');void dovNum.offsetWidth;
+        dovNum.classList.add('brake');setTimeout(()=>dovNum.classList.remove('brake'),340);
+      }
+    }
+  }
+  // 오버레이 바 미러
+  const dovBar=$('dov-bar');
+  if(dovBar&&bar){
+    const pct=Math.min(100,Math.round(kmh/120*100));
+    const widthTr=rising?'width .13s cubic-bezier(.34,1.56,.64,1)':'width .60s cubic-bezier(.2,0,.4,1)';
+    dovBar.style.transition=`${widthTr}, box-shadow .35s, background .3s`;
+    dovBar.style.width=pct+'%';
+    dovBar.style.background=bar.style.background;
+    dovBar.style.boxShadow=bar.style.boxShadow;
+    dovBar.classList.toggle('driving',kmh>2);
+    if(rising&&delta>4&&kmh>2){
+      dovBar.classList.remove('burst');void dovBar.offsetWidth;
+      dovBar.classList.add('burst');setTimeout(()=>dovBar.classList.remove('burst'),440);
+    }
+  }
+  checkDriveMode(kmh);
 }
 function triggerWaveBurst(){
   const bg=$('js-wave-bg');if(!bg)return;
@@ -933,26 +1217,17 @@ function triggerWaveBurst(){
   bg.appendChild(n);
   setTimeout(()=>{if(n.parentNode)bg.removeChild(n);},700);
 }
-function setGear(g){set('js-gear',g||'P')}
+function setGear(g){set('js-gear',g||'P');set('dov-gear',g||'P');}
 
-/* 고도계 — EMA 스무딩 + 롤링 평균 + AGL 표시 */
+/* 고도계 — DEM(수치표고모델) 우선, GPS 폴백 */
 let _altDisp=null,_altTarget=null,_altRaf=null;
 let _altEMA=null,_altSamples=[];
 const _ALT_ALPHA=0.18,_ALT_N=6;
 let _terrainElev=null;
+let _demElev=null,_demLat=null,_demLon=null;
 
-function updateAltimeter(rawAlt,acc){
-  if(rawAlt==null||isNaN(rawAlt))return;
-
-  // 1) 롤링 평균 (최근 N개 GPS 샘플 평균 → 순간 스파이크 제거)
-  _altSamples.push(rawAlt);
-  if(_altSamples.length>_ALT_N)_altSamples.shift();
-  const avg=_altSamples.reduce((s,v)=>s+v,0)/_altSamples.length;
-
-  // 2) EMA (지수 이동 평균 → 드리프트 스무딩)
-  _altEMA=(_altEMA==null)?avg:_ALT_ALPHA*avg+(1-_ALT_ALPHA)*_altEMA;
-
-  const newAlt=Math.round(_altEMA);
+/* DEM 고도 렌더링 (공통) */
+function _renderAlt(newAlt,src){
   if(newAlt===_altTarget)return;
   _altTarget=newAlt;
   if(_altRaf){cancelAnimationFrame(_altRaf);_altRaf=null;}
@@ -960,32 +1235,50 @@ function updateAltimeter(rawAlt,acc){
   if(!el){set('js-alt',newAlt);_altDisp=newAlt;return;}
   const from=_altDisp??newAlt;
   const delta=Math.abs(newAlt-from);
-  if(delta===0){el.textContent=newAlt;_altDisp=newAlt;return;}
-  const rising=newAlt>from;
-  el.classList.remove('rising','falling');
-  void el.offsetWidth;
-  el.classList.add(rising?'rising':'falling');
-  setTimeout(()=>el.classList.remove('rising','falling'),600);
-  const dur=Math.min(400,Math.max(100,delta*4));
-  const t0=performance.now();
-  function step(now){
-    const p=Math.min(1,(now-t0)/dur);
-    const e=1-(1-p)**3;
-    const v=Math.round(from+(newAlt-from)*e);
-    el.textContent=v;
-    _altDisp=v;
-    if(p<1){_altRaf=requestAnimationFrame(step);}
-    else{_altRaf=null;_altDisp=newAlt;}
+  if(delta===0){el.textContent=newAlt;_altDisp=newAlt;}
+  else{
+    const rising=newAlt>from;
+    el.classList.remove('rising','falling');
+    void el.offsetWidth;
+    el.classList.add(rising?'rising':'falling');
+    setTimeout(()=>el.classList.remove('rising','falling'),600);
+    const dur=Math.min(400,Math.max(100,delta*4));
+    const t0=performance.now();
+    (function step(now){
+      const p=Math.min(1,(now-t0)/dur);
+      const v=Math.round(from+(newAlt-from)*(1-(1-p)**3));
+      el.textContent=v;_altDisp=v;
+      if(p<1){_altRaf=requestAnimationFrame(step);}
+      else{_altRaf=null;_altDisp=newAlt;}
+    })(performance.now());
   }
-  _altRaf=requestAnimationFrame(step);
+  set('js-alt-acc',src==='DEM'?'DEM  ±2m':'GPS  ±'+Math.round(_altEMA??0)+'m');
+}
 
-  // 정확도 + AGL(지상고도) 병행 표시
-  let accTxt=acc!=null?'±'+Math.round(acc)+'m':'';
-  if(_terrainElev!=null){
-    const agl=Math.round(_altEMA-_terrainElev);
-    accTxt+=(accTxt?'  ':'')+( agl>=0?'+':'')+agl+'m AGL';
-  }
-  set('js-alt-acc',accTxt);
+/* Open-Meteo Elevation API — 위치 변화 150m 이상이면 재호출 */
+async function fetchDemElevation(la,lo){
+  if(_demLat!=null&&Math.abs(la-_demLat)<0.0015&&Math.abs(lo-_demLon)<0.0015)return;
+  _demLat=la;_demLon=lo;
+  try{
+    const r=await fetch(`https://api.open-meteo.com/v1/elevation?latitude=${la}&longitude=${lo}`);
+    const d=await r.json();
+    if(Array.isArray(d.elevation)&&d.elevation[0]!=null){
+      _demElev=Math.round(d.elevation[0]);
+      _terrainElev=_demElev;
+      _renderAlt(_demElev,'DEM');
+    }
+  }catch{}
+}
+
+/* GPS 고도 — DEM이 없을 때만 폴백으로 표시 */
+function updateAltimeter(rawAlt,acc){
+  if(rawAlt==null||isNaN(rawAlt))return;
+  _altSamples.push(rawAlt);
+  if(_altSamples.length>_ALT_N)_altSamples.shift();
+  const avg=_altSamples.reduce((s,v)=>s+v,0)/_altSamples.length;
+  _altEMA=(_altEMA==null)?avg:_ALT_ALPHA*avg+(1-_ALT_ALPHA)*_altEMA;
+  if(_demElev!=null)return; // DEM 있으면 GPS 고도 무시
+  _renderAlt(Math.round(_altEMA),'GPS');
 }
 
 
@@ -1033,7 +1326,7 @@ function updateCompass(heading){
   if(dir!==_prevDir){
     const d=$('js-dir');
     if(d){d.classList.remove('flip');void d.offsetWidth;d.classList.add('flip');}
-    set('js-dir',dir);
+    set('js-dir',dir);set('dov-dir-ov',dir);
     _prevDir=dir;
   }
 }
@@ -1068,8 +1361,10 @@ function updateGpsGearKw(kmh,ts){
 
 function _gpsKwDisplay(kw){
   const el=$('js-pwr');if(!el)return;
-  el.textContent=(kw>=0?'+':'')+kw+' kW';
-  el.style.color=kw<-10?'var(--cyan)':kw>80?'var(--amber)':'rgba(255,255,255,0.5)';
+  const txt=(kw>=0?'+':'')+kw+' kW';
+  const col=kw<-10?'var(--cyan)':kw>80?'var(--amber)':'rgba(255,255,255,0.5)';
+  el.textContent=txt;el.style.color=col;
+  const dk=$('dov-kw');if(dk){dk.textContent=txt;dk.style.color=col;}
 }
 
 /* GPS */
@@ -1099,7 +1394,13 @@ function onGPS(p){
   if(!isTeslaConnected){setSpeed(kmh);set('js-spd-st',kmh>2?'DRIVING':'STOP');updateGpsGearKw(kmh,ts);}
   onTripUpdate(la,lo,kmh);
   if(p.coords.heading!=null&&!isNaN(p.coords.heading))updateCompass(p.coords.heading);
+  fetchDemElevation(la,lo);
   if(p.coords.altitude!=null)updateAltimeter(p.coords.altitude,p.coords.altitudeAccuracy);
+  updateMap(la,lo,p.coords.heading);
+  if(_driveMode){
+    const td=$('js-trip-dist');if(td)set('dov-trip',td.textContent+' km');
+    const ta=$('js-alt');if(ta)set('dov-alt',ta.textContent+' m');
+  }
   set('js-lat',la.toFixed(5)+'°N');set('js-lon',lo.toFixed(5)+'°E');set('js-acc','정확도 ±'+Math.round(ac)+'m');
   dot('js-gdot','ok');set('js-gst','GPS Active');
   const now=Date.now();if(now-wxTs>600000){wxTs=now;fetchWeather(la,lo);}
@@ -1290,7 +1591,25 @@ function _wxScheduleLightning(){
   },d);
 }
 
+let _geoLat=null,_geoLon=null;
+async function fetchGeoName(la,lo){
+  // 1° ≈ 111km — 0.05° 이내면 캐시 재사용
+  if(_geoLat!=null&&Math.abs(la-_geoLat)<0.05&&Math.abs(lo-_geoLon)<0.05)return;
+  _geoLat=la;_geoLon=lo;
+  try{
+    const r=await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${la}&lon=${lo}&format=json&accept-language=ko`,
+      {headers:{'User-Agent':'tesla-dashboard/1.0'}});
+    const d=await r.json();
+    const a=d.address||{};
+    // 동/읍/면 → 구/군 → 시 순으로 가장 세밀한 단위 선택
+    const district=a.suburb||a.neighbourhood||a.quarter||a.village||a.town||'';
+    const city=a.city||a.county||a.state_district||a.state||'';
+    const loc=[district,city].filter(Boolean).join(' ');
+    const el=$('js-wx-loc');if(el)el.textContent=loc||'--';
+  }catch{}
+}
 async function fetchWeather(la,lo){
+  fetchGeoName(la,lo);
   try{
     const r=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${la}&longitude=${lo}&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m,uv_index&wind_speed_unit=ms&timezone=auto`);
     const data=await r.json();
@@ -1298,12 +1617,13 @@ async function fetchWeather(la,lo){
     const{current:c}=data;
     set('js-wi',WI[c.weather_code]||'🌤️');set('js-tmp',Math.round(c.temperature_2m)+'°');
     set('js-dsc',WD[c.weather_code]||'--');set('js-feel',Math.round(c.apparent_temperature)+'°');
+    set('dov-wx',Math.round(c.temperature_2m)+'° '+(WD[c.weather_code]||''));
     set('js-hum',c.relative_humidity_2m+'%');set('js-wnd',c.wind_speed_10m+'m/s');
     applyWaveStyle(c.weather_code);
     setWeatherEffect(c.weather_code);
     if(c.uv_index!=null){
       const uv=Math.round(c.uv_index*10)/10;
-      const el=$('js-uv');if(el){el.textContent=uv;el.style.color=uvColor(uv);}
+      setUvCard(uv);
     }
     fetchAQI(la,lo);
   }catch{set('js-dsc','Error');}
@@ -1313,19 +1633,35 @@ async function fetchAQI(la,lo){
     const r=await fetch(`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${la}&longitude=${lo}&current=european_aqi&timezone=auto`);
     const d=await r.json();
     if(d.current?.european_aqi!=null){
-      const aqi=Math.round(d.current.european_aqi);
-      const el=$('js-aqi');if(el){el.textContent=aqi;el.style.color=aqiColor(aqi);}
+      setAqiCard(Math.round(d.current.european_aqi));
     }
   }catch{}
 }
-function uvColor(v){
-  if(v<=2)return'var(--green)';if(v<=5)return'#FFD700';
-  if(v<=7)return'var(--amber)';if(v<=10)return'var(--red)';return'#C39BD3';
+function uvInfo(v){
+  if(v<=2)return{g:'낮음',c:'#2ECC71',pct:v/11*100};
+  if(v<=5)return{g:'보통',c:'#FFD700',pct:v/11*100};
+  if(v<=7)return{g:'높음',c:'#E67E22',pct:v/11*100};
+  if(v<=10)return{g:'매우 높음',c:'#E31937',pct:v/11*100};
+  return{g:'위험',c:'#C39BD3',pct:100};
 }
-function aqiColor(v){
-  if(v<=20)return'var(--green)';if(v<=40)return'#9ACD32';
-  if(v<=60)return'#FFD700';if(v<=80)return'var(--amber)';
-  if(v<=100)return'var(--red)';return'#C39BD3';
+function aqiInfo(v){
+  if(v<=20)return{g:'좋음',c:'#2ECC71',pct:v/100*100};
+  if(v<=40)return{g:'보통',c:'#FFD700',pct:v/100*100};
+  if(v<=60)return{g:'나쁨',c:'#E67E22',pct:v/100*100};
+  if(v<=80)return{g:'매우 나쁨',c:'#E31937',pct:Math.min(100,v)};
+  return{g:'위험',c:'#C39BD3',pct:100};
+}
+function setUvCard(v){
+  const{g,c,pct}=uvInfo(v);
+  const el=$('js-uv');if(el){el.textContent=v;el.style.color=c;}
+  const ge=$('js-uv-grade');if(ge){ge.textContent=g;ge.style.color=c;}
+  const bar=$('js-uv-bar');if(bar){bar.style.width=Math.round(pct)+'%';bar.style.background=c;}
+}
+function setAqiCard(v){
+  const{g,c,pct}=aqiInfo(v);
+  const el=$('js-aqi');if(el){el.textContent=v;el.style.color=c;}
+  const ge=$('js-aqi-grade');if(ge){ge.textContent=g;ge.style.color=c;}
+  const bar=$('js-aqi-bar');if(bar){bar.style.width=Math.round(pct)+'%';bar.style.background=c;}
 }
 
 /* 기기 배터리 */
@@ -1346,6 +1682,278 @@ window.addEventListener('online',netUpd);window.addEventListener('offline',netUp
 async function reqWake(){try{if('wakeLock'in navigator)await navigator.wakeLock.request('screen')}catch{}}
 reqWake();
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')reqWake();});
+
+/* ── G-force 게이지 ── */
+let _gSmX=0,_gSmY=0,_gTrail=[],_gPeakMag=0,_gPeakX=0,_gPeakY=0,_gPeakTs=0;
+let _gBaseX=0,_gBaseY=0,_gBaseZ=0,_gCalBuf=[],_gCalDone=false;
+const _G_ALPHA=0.18,_G_TRAIL=50,_G_MAX=1.4,_G_PEAK_HOLD=6000;
+
+function initGForce(){
+  if(typeof DeviceMotionEvent==='undefined'){return;}
+  if(typeof DeviceMotionEvent.requestPermission==='function'){
+    // iOS 13+: 권한 버튼 표시
+    const btn=$('js-g-perm');if(btn)btn.style.display='block';
+  } else {
+    _startGListener();
+  }
+}
+function requestGPermission(){
+  if(typeof DeviceMotionEvent.requestPermission==='function'){
+    DeviceMotionEvent.requestPermission().then(r=>{
+      if(r==='granted'){
+        const btn=$('js-g-perm');if(btn)btn.style.display='none';
+        _startGListener();
+      }
+    }).catch(()=>{});
+  }
+}
+function _startGListener(){
+  window.addEventListener('devicemotion',_onDeviceMotion,{passive:true});
+}
+function _onDeviceMotion(e){
+  const a=e.accelerationIncludingGravity;
+  if(!a)return;
+  const rx=a.x||0,ry=a.y||0,rz=a.z||0;
+  // 캘리브레이션: 첫 30샘플 평균으로 중력 기저값 계산
+  if(!_gCalDone){
+    _gCalBuf.push([rx,ry,rz]);
+    if(_gCalBuf.length>=30){
+      _gBaseX=_gCalBuf.reduce((s,v)=>s+v[0],0)/30;
+      _gBaseY=_gCalBuf.reduce((s,v)=>s+v[1],0)/30;
+      _gBaseZ=_gCalBuf.reduce((s,v)=>s+v[2],0)/30;
+      _gCalDone=true;_gCalBuf=[];
+    }
+    return;
+  }
+  // 기저값 제거 → 순수 가속도
+  const ax=rx-_gBaseX,ay=ry-_gBaseY;
+  // EMA 스무딩
+  _gSmX=_G_ALPHA*ax+(1-_G_ALPHA)*_gSmX;
+  _gSmY=_G_ALPHA*ay+(1-_G_ALPHA)*_gSmY;
+  // G 단위 변환 (9.81 m/s² = 1G)
+  const gx=_gSmX/9.81,gy=_gSmY/9.81;
+  const mag=Math.sqrt(gx*gx+gy*gy);
+  // 피크 업데이트
+  if(mag>_gPeakMag){_gPeakMag=mag;_gPeakX=gx;_gPeakY=gy;_gPeakTs=Date.now();}
+  if(Date.now()-_gPeakTs>_G_PEAK_HOLD){_gPeakMag*=0.98;} // 피크 서서히 감소
+  // trail 기록
+  _gTrail.push({x:gx,y:gy,t:Date.now()});
+  if(_gTrail.length>_G_TRAIL)_gTrail.shift();
+  _drawGGauge(gx,gy,mag);
+}
+
+function _drawGGauge(gx,gy,mag){
+  const cvs=$('js-g-canvas');if(!cvs)return;
+  const ctx=cvs.getContext('2d');
+  // 캔버스 실제 px 크기 설정
+  const rect=cvs.getBoundingClientRect();
+  const dpr=window.devicePixelRatio||1;
+  if(cvs.width!==Math.round(rect.width*dpr)){
+    cvs.width=Math.round(rect.width*dpr);
+    cvs.height=Math.round(rect.height*dpr);
+    ctx.scale(dpr,dpr);
+  }
+  const W=rect.width,H=rect.height;
+  const cx=W/2,cy=H/2,R=Math.min(cx,cy)-4;
+  ctx.clearRect(0,0,W,H);
+
+  // ── 배경 원 ──
+  const bgG=ctx.createRadialGradient(cx,cy,0,cx,cy,R);
+  bgG.addColorStop(0,'rgba(255,255,255,0.05)');
+  bgG.addColorStop(1,'rgba(0,0,0,0.35)');
+  ctx.beginPath();ctx.arc(cx,cy,R,0,Math.PI*2);
+  ctx.fillStyle=bgG;ctx.fill();
+  ctx.strokeStyle='rgba(255,255,255,0.08)';ctx.lineWidth=1;ctx.stroke();
+
+  // ── G 존 링 ──
+  const zones=[
+    {g:0.3,color:'rgba(46,204,113,0.22)',lbl:'0.3'},
+    {g:0.6,color:'rgba(255,215,0,0.18)',lbl:'0.6'},
+    {g:1.0,color:'rgba(227,25,55,0.18)',lbl:'1.0'},
+  ];
+  zones.forEach(z=>{
+    const r=(z.g/_G_MAX)*R;
+    ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);
+    ctx.strokeStyle=z.color;ctx.lineWidth=1;ctx.stroke();
+    // 링 라벨
+    ctx.fillStyle='rgba(255,255,255,0.20)';
+    ctx.font=`${Math.max(8,R*0.13)}px Anton,Impact,sans-serif`;
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(z.lbl+'G',cx,cy-r+R*0.1);
+  });
+
+  // ── 십자선 ──
+  ctx.strokeStyle='rgba(255,255,255,0.10)';ctx.lineWidth=1;
+  ctx.setLineDash([3,4]);
+  ctx.beginPath();ctx.moveTo(cx-R,cy);ctx.lineTo(cx+R,cy);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(cx,cy-R);ctx.lineTo(cx,cy+R);ctx.stroke();
+  ctx.setLineDash([]);
+
+  // ── 방향 레이블 ──
+  ctx.fillStyle='rgba(255,255,255,0.18)';
+  ctx.font=`${Math.max(7,R*0.12)}px Anton,Impact,sans-serif`;
+  ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText('ACC',cx,cy-R+R*0.18);
+  ctx.fillText('BRK',cx,cy+R-R*0.18);
+
+  // ── trail ──
+  const now=Date.now();
+  _gTrail.forEach((pt,i)=>{
+    const age=(now-pt.t)/800;
+    const a=Math.max(0,0.7-age);
+    if(a<=0)return;
+    const px=cx+(pt.x/_G_MAX)*R,py=cy-(pt.y/_G_MAX)*R;
+    ctx.beginPath();ctx.arc(px,py,2.5,0,Math.PI*2);
+    ctx.fillStyle=`rgba(0,220,255,${a*0.7})`;ctx.fill();
+  });
+
+  // ── 피크 마커 ──
+  if(_gPeakMag>0.05){
+    const ppx=cx+(_gPeakX/_G_MAX)*R,ppy=cy-(_gPeakY/_G_MAX)*R;
+    ctx.beginPath();ctx.arc(ppx,ppy,4,0,Math.PI*2);
+    ctx.strokeStyle='rgba(227,25,55,0.65)';ctx.lineWidth=1.5;ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(ppx-3,ppy-3);ctx.lineTo(ppx+3,ppy+3);
+    ctx.moveTo(ppx+3,ppy-3);ctx.lineTo(ppx-3,ppy+3);
+    ctx.strokeStyle='rgba(227,25,55,0.55)';ctx.lineWidth=1;ctx.stroke();
+  }
+
+  // ── 현재 닷 ──
+  const clampG=v=>Math.max(-_G_MAX,Math.min(_G_MAX,v));
+  const dpx=cx+(clampG(gx)/_G_MAX)*R,dpy=cy-(clampG(gy)/_G_MAX)*R;
+  const dotCol=mag<0.3?'#2ECC71':mag<0.6?'#FFD700':'#E31937';
+  const glowR=Math.max(R*0.18,10);
+  const grd=ctx.createRadialGradient(dpx,dpy,0,dpx,dpy,glowR);
+  grd.addColorStop(0,dotCol+'cc');grd.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.beginPath();ctx.arc(dpx,dpy,glowR,0,Math.PI*2);
+  ctx.fillStyle=grd;ctx.fill();
+  ctx.shadowColor=dotCol;ctx.shadowBlur=12;
+  ctx.beginPath();ctx.arc(dpx,dpy,R*0.08,0,Math.PI*2);
+  ctx.fillStyle=dotCol;ctx.fill();
+  ctx.shadowBlur=0;
+
+  // ── 수치 업데이트 ──
+  const cv=$('js-g-cur');
+  if(cv){cv.textContent=mag.toFixed(2);cv.style.color=dotCol;}
+  set('js-g-peak','PEAK '+_gPeakMag.toFixed(2)+'G');
+}
+
+// 리사이즈 시 캔버스 재설정
+window.addEventListener('resize',()=>{
+  const cvs=$('js-g-canvas');
+  if(cvs){cvs.width=0;cvs.height=0;} // 다음 렌더에서 재계산
+});
+initGForce();
+
+/* ── 주행 모드 (50 km/h 기준) ── */
+function _enterDriveMode(){
+  if(_driveMode)return;
+  _driveMode=true;
+  document.querySelector('.root').classList.add('drive-mode');
+  document.getElementById('js-drive-ov').classList.add('active');
+  _dovSync();
+}
+function _exitDriveMode(){
+  if(!_driveMode)return;
+  _driveMode=false;
+  document.querySelector('.root').classList.remove('drive-mode');
+  document.getElementById('js-drive-ov').classList.remove('active');
+}
+function checkDriveMode(kmh){
+  if(!_driveModeOn){return;}
+  if(kmh>=50){
+    clearTimeout(_driveModeTimer);_driveModeTimer=null;
+    _enterDriveMode();
+  } else if(_driveMode&&!_driveModeTimer){
+    _driveModeTimer=setTimeout(()=>{_driveModeTimer=null;_exitDriveMode();},2000);
+  }
+}
+function toggleDriveOverlay(){
+  _driveModeOn=!_driveModeOn;
+  const btn=$('js-drive-btn');
+  if(btn)btn.style.color=_driveModeOn?'var(--cyan)':'var(--t2)';
+  if(!_driveModeOn){
+    clearTimeout(_driveModeTimer);_driveModeTimer=null;
+    _exitDriveMode();
+  }
+}
+function _dovSync(){
+  const spd=$('js-spd');if(spd)set('dov-spd',spd.textContent);
+  const gear=$('js-gear');if(gear)set('dov-gear',gear.textContent);
+  const kw=$('js-pwr');if(kw){const e=$('dov-kw');if(e)e.textContent=kw.textContent;}
+  const tmp=$('js-tmp'),dsc=$('js-dsc');
+  if(tmp){set('dov-wx',tmp.textContent+(dsc?' '+dsc.textContent:''));}
+  const td=$('js-trip-dist');if(td)set('dov-trip',td.textContent+' km');
+  const alt=$('js-alt');if(alt)set('dov-alt',alt.textContent+' m');
+  const dir=$('js-dir');if(dir)set('dov-dir-ov',dir.textContent);
+  _dovTime();
+}
+function _dovTime(){
+  const h=$('js-clk-h'),m=$('js-clk-m');
+  if(h&&m)set('dov-time',h.textContent+':'+m.textContent);
+}
+
+/* ── Leaflet 지도 ── */
+const _map=L.map('js-map',{
+  zoomControl:false,
+  attributionControl:false,
+  dragging:false,
+  scrollWheelZoom:false,
+  doubleClickZoom:false,
+  touchZoom:false,
+  keyboard:false,
+}).setView([37.5665,126.978],16);
+
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{
+  maxZoom:19,
+  subdomains:'abcd',
+}).addTo(_map);
+
+/* 현재 위치 마커 */
+const _markerEl=document.createElement('div');
+_markerEl.className='map-marker';
+const _marker=L.marker([37.5665,126.978],{
+  icon:L.divIcon({html:_markerEl,className:'',iconSize:[16,16],iconAnchor:[8,8]}),
+  zIndexOffset:1000,
+}).addTo(_map);
+
+/* heading 화살표 마커 */
+const _arrowEl=document.createElement('div');
+_arrowEl.className='map-heading-arrow';
+const _arrowMarker=L.marker([37.5665,126.978],{
+  icon:L.divIcon({html:_arrowEl,className:'',iconSize:[14,18],iconAnchor:[7,18]}),
+  zIndexOffset:999,
+}).addTo(_map);
+
+let _mapHeading=0,_mapLat=null,_mapLon=null;
+let _mapTrail=[];
+let _trailLine=L.polyline([],{color:'rgba(0,220,255,0.45)',weight:2,smoothFactor:1}).addTo(_map);
+
+function updateMap(lat,lon,heading){
+  _mapLat=lat;_mapLon=lon;
+  const ll=[lat,lon];
+  _map.setView(ll,_map.getZoom(),{animate:true,duration:0.6});
+  _marker.setLatLng(ll);
+  _arrowMarker.setLatLng(ll);
+
+  // heading 화살표 회전
+  if(heading!=null&&!isNaN(heading)){
+    _mapHeading=heading;
+    _arrowEl.style.transform=`rotate(${heading}deg)`;
+  }
+
+  // 경로 trail
+  _mapTrail.push(ll);
+  if(_mapTrail.length>300)_mapTrail.shift();
+  _trailLine.setLatLngs(_mapTrail);
+
+  // HUD 좌표
+  const hud=$('js-map-hud');
+  if(hud)hud.textContent=lat.toFixed(5)+'°N  '+lon.toFixed(5)+'°E';
+}
+
+// 지도 크기 재조정 (윈도우 리사이즈 시)
+window.addEventListener('resize',()=>{ _map.invalidateSize(); });
 
 /* 트립 컴퓨터 */
 function resetTrip(){
@@ -1507,32 +2115,33 @@ function showErr(id,msg){const el=$(id);if(!el)return;el.textContent=msg;el.clas
 /* ── DEMO MODE ── */
 let _demoTimer=null,_demoT=0;
 const _DEMO_SCRIPT=[
-  // [ms, speed, heading, altitude, battPct, gear]
-  [0,    0,   45,  38, 78, 'P'],
-  [800,  12,  45,  38, 78, 'D'],
-  [1600, 34,  52,  40, 77, 'D'],
-  [2400, 67,  68,  45, 77, 'D'],
-  [3200, 95,  82,  52, 76, 'D'],
-  [4000,115,  91,  60, 76, 'D'],
-  [4800,108,  91,  60, 75, 'D'],
-  [5600, 88, 110,  55, 75, 'D'],
-  [6400, 72, 135,  48, 74, 'D'],
-  [7200, 55, 178,  42, 74, 'D'],
-  [8000, 38, 225,  36, 74, 'D'],
-  [8800, 20, 270,  30, 73, 'D'],
-  [9600,  8, 315,  28, 73, 'D'],
-  [10400, 0, 358,  25, 73, 'P'],
-  [11200, 0,   2,  25, 73, 'P'],
+  // [ms, speed, heading, altitude, battPct, gear, lat, lon]
+  [0,    0,   45,  38, 78, 'P', 37.4979, 127.0276],
+  [800,  12,  45,  38, 78, 'D', 37.4981, 127.0279],
+  [1600, 34,  52,  40, 77, 'D', 37.4985, 127.0285],
+  [2400, 67,  68,  45, 77, 'D', 37.4992, 127.0298],
+  [3200, 95,  82,  52, 76, 'D', 37.5001, 127.0316],
+  [4000,115,  91,  60, 76, 'D', 37.5003, 127.0338],
+  [4800,108,  91,  60, 75, 'D', 37.5003, 127.0358],
+  [5600, 88, 110,  55, 75, 'D', 37.5000, 127.0376],
+  [6400, 72, 135,  48, 74, 'D', 37.4994, 127.0390],
+  [7200, 55, 178,  42, 74, 'D', 37.4984, 127.0395],
+  [8000, 38, 225,  36, 74, 'D', 37.4975, 127.0390],
+  [8800, 20, 270,  30, 73, 'D', 37.4970, 127.0379],
+  [9600,  8, 315,  28, 73, 'D', 37.4971, 127.0370],
+  [10400, 0, 358,  25, 73, 'P', 37.4974, 127.0368],
+  [11200, 0,   2,  25, 73, 'P', 37.4974, 127.0368],
 ];
 function runDemoStep(idx){
   if(!_demoTimer)return;
   const step=_DEMO_SCRIPT[idx];
-  const[,spd,hdg,alt,bat,gear]=step;
+  const[,spd,hdg,alt,bat,gear,dLat,dLon]=step;
   setSpeed(spd);
   set('js-spd-st',spd>2?'DRIVING':'STOP');
   setGear(gear);
   updateCompass(hdg);
   updateAltimeter(alt,null);
+  if(dLat!=null)updateMap(dLat,dLon,hdg);
   // device battery
   const bel=$('js-bat');if(bel)bel.textContent=bat+'%';
   const bar=$('js-bar');if(bar){bar.style.width=bat+'%';bar.style.background=bat>50?'#2ECC71':bat>20?'#E67E22':'#E31937';}
@@ -1541,6 +2150,28 @@ function runDemoStep(idx){
   const kw=spd>2?Math.round(spd*0.9*(spd>80?1.4:1)):0;
   const pwrEl=$('js-pwr');
   if(pwrEl){pwrEl.textContent=(kw>0?'+':'')+kw+' kW';pwrEl.style.color=kw>80?'var(--amber)':'rgba(255,255,255,0.5)';}
+  // G-force 시뮬레이션: 다음 스텝과의 속도/헤딩 차이로 계산
+  {
+    const ni=idx+1<_DEMO_SCRIPT.length?idx+1:0;
+    const ns=_DEMO_SCRIPT[ni];
+    const dt=0.8;
+    // 종방향 G: 가속(+) = ACC, 감속(-) = BRK
+    const dv=(ns[1]-spd)/3.6;
+    const gy_d=dv/dt/9.81;
+    // 횡방향 G: 회전 원심력
+    let dh=ns[2]-hdg;
+    if(dh>180)dh-=360;if(dh<-180)dh+=360;
+    const omega=(dh*Math.PI/180)/dt;
+    const gx_d=-(omega*(spd/3.6))/9.81*0.5; // 0.5 감쇠(데모 과장 방지)
+    const clampG=v=>Math.max(-_G_MAX,Math.min(_G_MAX,v));
+    const gx=clampG(gx_d), gy=clampG(gy_d);
+    const mag=Math.sqrt(gx*gx+gy*gy);
+    _gTrail.push({x:gx,y:gy,t:Date.now()});
+    if(_gTrail.length>_G_TRAIL)_gTrail.shift();
+    if(mag>_gPeakMag){_gPeakMag=mag;_gPeakX=gx;_gPeakY=gy;_gPeakTs=Date.now();}
+    if(Date.now()-_gPeakTs>_G_PEAK_HOLD)_gPeakMag*=0.98;
+    _drawGGauge(gx,gy,mag);
+  }
   const next=idx+1<_DEMO_SCRIPT.length?idx+1:0;
   const delay=next===0?2000:(_DEMO_SCRIPT[next][0]-step[0]);
   _demoTimer=setTimeout(()=>runDemoStep(next),delay);
@@ -1552,7 +2183,8 @@ function toggleDemo(){
   if(_demoTimer){
     clearTimeout(_demoTimer);_demoTimer=null;
     if(btn){btn.style.color='var(--t2)';}
-    setWeatherEffect(-1); // 이펙트 초기화
+    setWeatherEffect(-1);
+    _gTrail=[];_gPeakMag=0;_drawGGauge(0,0,0);
   } else {
     _demoTimer=true;
     if(btn){btn.style.color='var(--cyan)';}
@@ -1567,6 +2199,7 @@ function toggleDemo(){
     runDemoStep(0);
   }
 }
+
 </script>
 </body>
 </html>
