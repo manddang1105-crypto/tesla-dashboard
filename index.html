@@ -505,11 +505,12 @@ html,body{
 .htape-line.hc{height:clamp(8px,1.5vh,12px);background:var(--cyan)}
 .htape-line.hd{height:clamp(5px,1vh,8px);background:rgba(255,255,255,.22)}
 /* readout */
-.compass-readout{position:relative;display:flex;align-items:baseline;justify-content:center}
+.compass-readout{position:relative;display:flex;align-items:baseline;justify-content:center;min-width:0;overflow:hidden;width:100%}
 .compass-dir{
   font-family:'Anton',Impact,sans-serif;
-  font-size:clamp(48px,11vh,88px);
+  font-size:clamp(28px,6vh,52px);
   color:var(--t0);letter-spacing:1px;line-height:1;
+  white-space:nowrap;min-width:0;
 }
 @keyframes dirBurst{
   0%{opacity:0;transform:scale(1.65);text-shadow:0 0 28px rgba(0,220,255,1),0 0 56px rgba(0,220,255,.5)}
@@ -747,6 +748,34 @@ html,body{
   padding:3px 8px;border-radius:6px;border:1px solid rgba(0,220,255,0.3);
 }
 
+/* ── 지도 타일 부드러운 전환 ── */
+.leaflet-container{background:#050505!important}
+.leaflet-tile-pane{background:#050505}
+.leaflet-tile{transition:opacity .35s ease!important}
+
+/* ── 스트릭 파티클 ── */
+#js-streak-canvas{position:fixed;inset:0;z-index:0;pointer-events:none}
+
+/* ── 엣지 글로우 (G-force / 가감속) ── */
+#js-edge-glow{position:fixed;inset:0;z-index:2;pointer-events:none;transition:background .3s ease}
+
+/* ── 속도 스파크라인 ── */
+#js-sparkline{display:block;width:100%;height:clamp(18px,3vh,26px);margin-top:clamp(2px,.5vh,4px);opacity:.85}
+
+/* ── kW 방향 화살표 ── */
+.kw-dir-arrow{display:inline-block;font-size:.85em;margin-left:2px;transition:color .4s,transform .4s;vertical-align:middle}
+.kw-dir-arrow.cons{color:var(--amber)}
+.kw-dir-arrow.regen{color:var(--green)}
+@keyframes regenShimmer{0%,100%{opacity:.7}50%{opacity:1;text-shadow:0 0 8px rgba(46,204,113,.8)}}
+.kw-dir-arrow.regen{animation:regenShimmer 1.1s ease-in-out infinite}
+
+/* ── G-force 히스토리 ── */
+#js-g-hist{display:block;width:100%;height:clamp(14px,2.2vh,20px);margin-top:clamp(1px,.3vh,3px);opacity:.75}
+
+/* ── 방문 마커 ── */
+.visit-dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.55);box-shadow:0 0 6px 2px rgba(255,255,255,.3);animation:visitPulse 2.8s ease-in-out infinite}
+@keyframes visitPulse{0%,100%{transform:scale(1);opacity:.5}50%{transform:scale(2.2);opacity:.9}}
+
 /* ── GPS 오버레이 ── */
 .gps-ov{position:fixed;inset:0;z-index:700;background:rgba(0,0,0,.97);display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px}
 .gps-ov.show{display:flex}
@@ -760,6 +789,8 @@ html,body{
 
 <div class="bg"></div>
 <canvas id="js-wx-canvas" style="position:fixed;inset:0;z-index:0;pointer-events:none"></canvas>
+<canvas id="js-streak-canvas"></canvas>
+<div id="js-edge-glow"></div>
 
 <div class="gps-ov" id="js-gps-ov">
   <svg style="height:30px;fill:#E31937" viewBox="-2 -2 104 167">
@@ -845,8 +876,9 @@ html,body{
         <div class="spd-row">
           <span class="spd-gear" id="js-gear">P</span>
           <span class="spd-st" id="js-spd-st">STOP</span>
-          <span class="spd-kw" id="js-pwr">— kW</span>
+          <span class="spd-kw" id="js-pwr">— kW</span><span class="kw-dir-arrow" id="js-kw-arrow"></span>
         </div>
+        <canvas id="js-sparkline"></canvas>
       </div>
 
       <div class="divider"></div>
@@ -921,6 +953,7 @@ html,body{
               <span class="g-unit-lbl">G</span>
             </div>
             <div class="g-peak-lbl" id="js-g-peak">PEAK 0.00G</div>
+            <canvas id="js-g-hist"></canvas>
             <div class="g-perm-btn" id="js-g-perm" onclick="requestGPermission()" style="display:none">TAP TO ENABLE</div>
           </div>
         </div>
@@ -1028,7 +1061,7 @@ const TAPI='https://fleet-api.prd.na.vn.cloud.tesla.com';
 let teslaTimer=null,isTeslaConnected=false,pollInterval=30000;
 let _tripDist=0,_tripStart=null,_tripSpdSamples=[],_tripMaxSpd=0,_tripPLat=null,_tripPLon=null;
 let _driveMode=false,_driveModeTimer=null,_driveModeOn=true;
-const _DRIVE_ENTER_SPD=10,_DRIVE_EXIT_DELAY=2500;
+const _DRIVE_ENTER_SPD=50,_DRIVE_EXIT_DELAY=2500;
 
 function $(id){return document.getElementById(id)}
 function set(id,v){const e=$(id);if(e)e.textContent=v}
@@ -1107,6 +1140,7 @@ function tick(){
   const ct=$('js-clk-h');
   if(ct&&ct.parentElement)ct.parentElement.style.color=getClockColor(d.getHours());
   if(_driveMode)_dovTime();
+  _applyDayNight();
 }
 setInterval(tick,1000);tick();
 
@@ -1176,9 +1210,10 @@ function setSpeed(kmh){
     }
   }
   _prevSpd=kmh;
-  // 오버레이 숫자 애니메이션 미러
+  // 오버레이 숫자 업데이트 + 애니메이션 미러
   const dovNum=$('dov-spd');
   if(dovNum){
+    dovNum.textContent=kmh;
     if(kmh===0){
       dovNum.classList.remove('punch','brake');
       if(!dovNum.classList.contains('idle'))dovNum.classList.add('idle');
@@ -1209,6 +1244,9 @@ function setSpeed(kmh){
     }
   }
   checkDriveMode(kmh);
+  _strkUpdate(kmh);
+  _sparkUpdate(kmh);
+  _mapZoomUpdate(kmh);
 }
 function triggerWaveBurst(){
   const bg=$('js-wave-bg');if(!bg)return;
@@ -1365,6 +1403,8 @@ function _gpsKwDisplay(kw){
   const col=kw<-10?'var(--cyan)':kw>80?'var(--amber)':'rgba(255,255,255,0.5)';
   el.textContent=txt;el.style.color=col;
   const dk=$('dov-kw');if(dk){dk.textContent=txt;dk.style.color=col;}
+  _kwArrowUpdate(kw);
+  _regenUpdate(kw);
 }
 
 /* GPS */
@@ -1397,6 +1437,7 @@ function onGPS(p){
   fetchDemElevation(la,lo);
   if(p.coords.altitude!=null)updateAltimeter(p.coords.altitude,p.coords.altitudeAccuracy);
   updateMap(la,lo,p.coords.heading);
+  _visitCheck(la,lo,kmh);
   if(_driveMode){
     const td=$('js-trip-dist');if(td)set('dov-trip',td.textContent+' km');
     const ta=$('js-alt');if(ta)set('dov-alt',ta.textContent+' m');
@@ -1740,6 +1781,8 @@ function _onDeviceMotion(e){
   _gTrail.push({x:gx,y:gy,t:Date.now()});
   if(_gTrail.length>_G_TRAIL)_gTrail.shift();
   _drawGGauge(gx,gy,mag);
+  _edgeGlowUpdate(gx,gy);
+  _gHistUpdate(mag);
 }
 
 function _drawGGauge(gx,gy,mag){
@@ -1861,11 +1904,11 @@ function _exitDriveMode(){
 }
 function checkDriveMode(kmh){
   if(!_driveModeOn){return;}
-  if(kmh>=50){
+  if(kmh>=_DRIVE_ENTER_SPD){
     clearTimeout(_driveModeTimer);_driveModeTimer=null;
     _enterDriveMode();
   } else if(_driveMode&&!_driveModeTimer){
-    _driveModeTimer=setTimeout(()=>{_driveModeTimer=null;_exitDriveMode();},2000);
+    _driveModeTimer=setTimeout(()=>{_driveModeTimer=null;_exitDriveMode();},_DRIVE_EXIT_DELAY);
   }
 }
 function toggleDriveOverlay(){
@@ -1902,6 +1945,9 @@ const _map=L.map('js-map',{
   doubleClickZoom:false,
   touchZoom:false,
   keyboard:false,
+  zoomAnimation:false,
+  fadeAnimation:false,
+  markerZoomAnimation:false,
 }).setView([37.5665,126.978],16);
 
 L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{
@@ -1927,27 +1973,51 @@ const _arrowMarker=L.marker([37.5665,126.978],{
 
 let _mapHeading=0,_mapLat=null,_mapLon=null;
 let _mapTrail=[];
-let _trailLine=L.polyline([],{color:'rgba(0,220,255,0.45)',weight:2,smoothFactor:1}).addTo(_map);
+
+/* ── 트레일: 글로우 + 5단계 페이드 세그먼트 ── */
+const _TRAIL_OPT={lineCap:'round',lineJoin:'round',smoothFactor:1};
+// 광원 글로우 (전체 경로, 넓고 흐릿하게)
+const _trailGlow=L.polyline([],{..._TRAIL_OPT,
+  color:'rgba(255,255,255,0.06)',weight:20,smoothFactor:3}).addTo(_map);
+// 5단계 페이드 세그먼트 (오래될수록 투명, 최신일수록 밝고 굵음)
+const _SEG_N=5;
+const _SEG_OP =[0.07,0.18,0.38,0.65,1.0];
+const _SEG_W  =[1.5, 1.8, 2.0, 2.4, 3.0];
+const _trailSegs=_SEG_OP.map((op,i)=>
+  L.polyline([],{..._TRAIL_OPT,
+    color:`rgba(255,255,255,${op})`,weight:_SEG_W[i]}).addTo(_map));
+
+function _updateTrail(){
+  const n=_mapTrail.length;
+  _trailGlow.setLatLngs(_mapTrail);
+  _trailSegs.forEach((seg,i)=>{
+    const from=Math.max(0,Math.floor(n*i/_SEG_N)-1);
+    const to=Math.min(n,Math.floor(n*(i+1)/_SEG_N)+1);
+    seg.setLatLngs(_mapTrail.slice(from,to));
+    const slice=(_mapTrailKmh||[]).slice(from,to);
+    const avg=slice.length?slice.reduce((a,b)=>a+b,0)/slice.length:0;
+    seg.setStyle({color:_spdToColor(avg,_SEG_OP[i])});
+  });
+}
 
 function updateMap(lat,lon,heading){
   _mapLat=lat;_mapLon=lon;
   const ll=[lat,lon];
-  _map.setView(ll,_map.getZoom(),{animate:true,duration:0.6});
+  _map.setView(ll,_mzTarget||16,{animate:true,duration:0.5,noMoveStart:true});
   _marker.setLatLng(ll);
   _arrowMarker.setLatLng(ll);
 
-  // heading 화살표 회전
   if(heading!=null&&!isNaN(heading)){
     _mapHeading=heading;
     _arrowEl.style.transform=`rotate(${heading}deg)`;
   }
 
-  // 경로 trail
   _mapTrail.push(ll);
-  if(_mapTrail.length>300)_mapTrail.shift();
-  _trailLine.setLatLngs(_mapTrail);
+  _mapTrailKmh.push(_prevSpd||0);
+  if(_mapTrail.length>300){_mapTrail.shift();_mapTrailKmh.shift();}
+  _updateTrail();
+  _updateRangeCircle(lat,lon);
 
-  // HUD 좌표
   const hud=$('js-map-hud');
   if(hud)hud.textContent=lat.toFixed(5)+'°N  '+lon.toFixed(5)+'°E';
 }
@@ -2051,6 +2121,7 @@ function updateTeslaCards(v){
   const cs=v.charge_state;
   if(cs){
     const pct=cs.battery_level??0,range=Math.round((cs.battery_range||0)*1.60934);
+    _battPctGlobal=pct;if(range>0)_estRangeKm=range/_battPctGlobal*100;
     set('tesla-batt-pct',pct+'%');set('tesla-batt-range',range+' km range');
     const chg=cs.charging_state;
     set('tesla-batt-st',chg==='Charging'?`Charging +${Math.round((cs.charge_rate||0)*1.60934)}km/h`:chg==='Complete'?'Charged ✓':chg==='Disconnected'?'Unplugged':'');
@@ -2071,6 +2142,7 @@ function updateTeslaCards(v){
       const kw=Math.round(ds.power),txt=(kw>=0?'+':'')+kw+' kW';
       const pwrEl=$('js-pwr');
       if(pwrEl){pwrEl.textContent=txt;pwrEl.style.color=kw<0?'var(--cyan)':kw>80?'var(--amber)':'rgba(255,255,255,0.5)';}
+      _kwArrowUpdate(kw);_regenUpdate(kw);
     }
   }
   const vs=v.vehicle_state;
@@ -2111,6 +2183,240 @@ function showErr(id,msg){const el=$(id);if(!el)return;el.textContent=msg;el.clas
     catch(e){console.warn('Auto reconnect:',e.message);dot('hdr-dot','err');set('hdr-tesla-txt','Reconnect Failed');}
   }
 })();
+
+/* ═══════════════════════════════════════════════════════════
+   고도화 피처 모음
+   ① 스트릭 파티클  ② 엣지 글로우  ③ 스파크라인
+   ④ 지도 자동줌    ⑤ 야간/주간 테마  ⑥ 속도 컬러 트레일
+   ⑦ 주행 가능 범위원  ⑧ G-force 히스토리  ⑨ 회생제동 이펙트
+   ⑩ kW 방향 화살표  ⑪ 방문 마커
+═══════════════════════════════════════════════════════════ */
+
+/* ─── ① 스피드 스트릭 파티클 ─────────────────────────────── */
+const _strkC=document.getElementById('js-streak-canvas');
+const _strkX=_strkC?_strkC.getContext('2d'):null;
+let _strkParts=[],_strkRaf=null,_strkKmh=0;
+(()=>{function r(){if(_strkC){_strkC.width=window.innerWidth;_strkC.height=window.innerHeight;}}r();window.addEventListener('resize',r);})();
+
+function _strkUpdate(kmh){
+  _strkKmh=kmh;
+  if(kmh<60){if(_strkRaf){cancelAnimationFrame(_strkRaf);_strkRaf=null;}_strkParts=[];if(_strkX)_strkX.clearRect(0,0,_strkC.width,_strkC.height);return;}
+  if(!_strkRaf)_strkLoop();
+}
+function _strkLoop(){
+  if(!_strkX||_strkKmh<58){_strkRaf=null;return;}
+  const W=_strkC.width,H=_strkC.height;
+  _strkX.clearRect(0,0,W,H);
+  const t=Math.min(1,(_strkKmh-60)/80); // 0@60 → 1@140
+  // 중앙 근처에서 방사형으로 파티클 생성
+  const n=Math.floor(t*4)+1;
+  for(let i=0;i<n;i++){
+    const a=Math.random()*Math.PI*2;
+    const spd=(120+Math.random()*300)*t;
+    _strkParts.push({
+      x:W*.5+(Math.random()-.5)*W*.08,y:H*.5+(Math.random()-.5)*H*.08,
+      vx:Math.cos(a)*spd,vy:Math.sin(a)*spd,
+      len:50+Math.random()*100*t,
+      op:0.06+Math.random()*0.2*t,
+      w:0.3+Math.random()*0.7,life:1
+    });
+  }
+  _strkParts=_strkParts.filter(p=>{
+    p.life-=0.022;p.x+=p.vx/60;p.y+=p.vy/60;
+    if(p.life<0||p.x<-80||p.x>W+80||p.y<-80||p.y>H+80)return false;
+    const spd=Math.hypot(p.vx,p.vy),tl=p.len/spd;
+    const x2=p.x-p.vx*tl,y2=p.y-p.vy*tl;
+    const fade=p.life*p.op;
+    const grd=_strkX.createLinearGradient(x2,y2,p.x,p.y);
+    grd.addColorStop(0,'rgba(255,255,255,0)');grd.addColorStop(1,`rgba(255,255,255,${fade})`);
+    _strkX.beginPath();_strkX.moveTo(x2,y2);_strkX.lineTo(p.x,p.y);
+    _strkX.strokeStyle=grd;_strkX.lineWidth=p.w;_strkX.stroke();
+    return true;
+  });
+  _strkRaf=requestAnimationFrame(_strkLoop);
+}
+
+/* ─── ② 엣지 글로우 ──────────────────────────────────────── */
+const _egl=document.getElementById('js-edge-glow');
+function _edgeGlowUpdate(gx,gy){
+  if(!_egl)return;
+  if(Math.hypot(gx,gy)<0.07){_egl.style.background='none';return;}
+  const bgs=[];
+  if(gy>0.08){const a=Math.min(.5,gy*.52);bgs.push(`radial-gradient(ellipse 100% 32% at 50% 100%,rgba(46,204,113,${a}),transparent 72%)`);}
+  if(gy<-0.08){const a=Math.min(.55,Math.abs(gy)*.6);bgs.push(`radial-gradient(ellipse 100% 32% at 50% 0%,rgba(231,76,60,${a}),transparent 72%)`);}
+  if(gx>0.08){const a=Math.min(.4,gx*.47);bgs.push(`radial-gradient(ellipse 22% 100% at 100% 50%,rgba(52,152,219,${a}),transparent 72%)`);}
+  if(gx<-0.08){const a=Math.min(.4,Math.abs(gx)*.47);bgs.push(`radial-gradient(ellipse 22% 100% at 0% 50%,rgba(52,152,219,${a}),transparent 72%)`);}
+  _egl.style.background=bgs.join(',')||'none';
+}
+
+/* ─── ③ 스파크라인 ───────────────────────────────────────── */
+const _spkC=document.getElementById('js-sparkline');
+const _spkX=_spkC?_spkC.getContext('2d'):null;
+const _spkData=new Array(60).fill(0);
+let _spkTs=0;
+function _sparkUpdate(kmh){
+  const now=Date.now();if(now-_spkTs<1000)return;_spkTs=now;
+  _spkData.push(kmh);if(_spkData.length>60)_spkData.shift();
+  _spkDraw();
+}
+function _spkDraw(){
+  if(!_spkX||!_spkC)return;
+  const dpr=window.devicePixelRatio||1;
+  const W=Math.round(_spkC.clientWidth*dpr),H=Math.round(_spkC.clientHeight*dpr);
+  if(_spkC.width!==W||_spkC.height!==H){_spkC.width=W;_spkC.height=H;}
+  _spkX.clearRect(0,0,W,H);
+  const mx=Math.max(1,..._spkData),n=_spkData.length,dx=W/(n-1);
+  // 그라디언트 채우기
+  const grd=_spkX.createLinearGradient(0,0,0,H);
+  grd.addColorStop(0,'rgba(0,220,255,.25)');grd.addColorStop(1,'rgba(0,220,255,0)');
+  _spkX.beginPath();_spkX.moveTo(0,H);
+  _spkData.forEach((v,i)=>_spkX.lineTo(i*dx,H-(v/mx)*H*.85));
+  _spkX.lineTo((n-1)*dx,H);_spkX.closePath();_spkX.fillStyle=grd;_spkX.fill();
+  // 선
+  _spkX.beginPath();
+  _spkData.forEach((v,i)=>{const x=i*dx,y=H-(v/mx)*H*.85;i===0?_spkX.moveTo(x,y):_spkX.lineTo(x,y);});
+  _spkX.strokeStyle='rgba(255,255,255,.7)';_spkX.lineWidth=1.2*dpr;_spkX.lineJoin='round';_spkX.stroke();
+  // 현재 속도 닷
+  const lv=_spkData[_spkData.length-1],lx=(n-1)*dx,ly=H-(lv/mx)*H*.85;
+  _spkX.beginPath();_spkX.arc(lx,ly,2.4*dpr,0,Math.PI*2);_spkX.fillStyle='rgba(0,220,255,.9)';_spkX.fill();
+}
+
+/* ─── ④ 지도 자동 줌 ────────────────────────────────────── */
+let _mzTarget=16;
+function _mapZoomUpdate(kmh){
+  const z=kmh<5?18:kmh<25?17:kmh<55?16:kmh<85?15:14;
+  _mzTarget=z; // updateMap의 setView에서 통합 적용 — 별도 setZoom 없음
+}
+
+/* ─── ⑤ 야간/주간 테마 ──────────────────────────────────── */
+let _dayMode=null,_dayTile=null,_nightTileRef=null;
+function _initNightTile(){_map.eachLayer(l=>{if(l._url&&l._url.includes('dark_all'))_nightTileRef=l;});}
+setTimeout(_initNightTile,600);
+
+function _swapTile(addLayer,removeLayer){
+  // 새 타일을 먼저 추가(구 타일 위에 덮음) → 1.5초 후 구 타일 제거(이미 가려진 상태)
+  addLayer.addTo(_map);
+  setTimeout(()=>{try{if(removeLayer&&_map.hasLayer(removeLayer))_map.removeLayer(removeLayer);}catch{}},1500);
+}
+
+function _applyDayNight(){
+  if(!_sunRise||!_sunSet)return;
+  const now=new Date(),day=now>_sunRise&&now<_sunSet;
+  if(day===_dayMode)return;_dayMode=day;
+  const root=document.documentElement;
+  if(day){
+    root.style.setProperty('--wave-color','rgba(255,190,60,.2)');
+    if(!_dayTile)_dayTile=L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{maxZoom:19,subdomains:'abcd'});
+    _swapTile(_dayTile,_nightTileRef);
+    _trailGlow.setStyle({color:'rgba(60,60,60,.08)'});
+  } else {
+    root.style.setProperty('--wave-color','rgba(0,220,255,.35)');
+    if(!_nightTileRef)_nightTileRef=L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{maxZoom:19,subdomains:'abcd'});
+    _swapTile(_nightTileRef,_dayTile);
+    _trailGlow.setStyle({color:'rgba(255,255,255,.06)'});
+  }
+}
+
+/* ─── ⑥ 속도 컬러 트레일 헬퍼 ──────────────────────────── */
+let _mapTrailKmh=[];
+function _spdToColor(kmh,op){
+  if(kmh<30)return`rgba(255,255,255,${op})`;
+  if(kmh<60){const t=(kmh-30)/30;return`rgba(255,${Math.round(255-t*80)},${Math.round(255-t*120)},${op})`;}
+  if(kmh<90){const t=(kmh-60)/30;return`rgba(255,${Math.round(175-t*95)},${Math.round(135-t*135)},${op})`;}
+  return`rgba(255,${Math.max(0,Math.round(80-(kmh-90)*2))},0,${op})`;
+}
+
+/* ─── ⑦ 주행 가능 범위원 ───────────────────────────────── */
+let _rangeCircle=null,_battPctGlobal=null,_estRangeKm=350;
+function _updateRangeCircle(lat,lon){
+  if(_battPctGlobal==null)return;
+  const r=(_battPctGlobal/100)*_estRangeKm*1000;
+  if(!_rangeCircle){
+    _rangeCircle=L.circle([lat,lon],{
+      radius:r,color:'rgba(255,255,255,.15)',weight:1,
+      dashArray:'3 9',fill:true,
+      fillColor:'rgba(255,255,255,.015)',fillOpacity:1
+    }).addTo(_map);
+  } else {_rangeCircle.setLatLng([lat,lon]);_rangeCircle.setRadius(r);}
+}
+
+/* ─── ⑧ G-force 히스토리 그래프 ────────────────────────── */
+const _ghC=document.getElementById('js-g-hist');
+const _ghX=_ghC?_ghC.getContext('2d'):null;
+const _ghData=[];const _GH_N=40;
+function _gHistUpdate(mag){
+  _ghData.push(Math.min(mag,_G_MAX));if(_ghData.length>_GH_N)_ghData.shift();
+  if(!_ghX||!_ghC)return;
+  const dpr=window.devicePixelRatio||1;
+  const W=Math.round(_ghC.clientWidth*dpr),H=Math.round(_ghC.clientHeight*dpr);
+  if(_ghC.width!==W||_ghC.height!==H){_ghC.width=W;_ghC.height=H;}
+  _ghX.clearRect(0,0,W,H);
+  const n=_ghData.length;if(n<2)return;
+  const dx=W/(n-1);
+  // 임계선 0.3G, 0.6G
+  [[.3,'rgba(46,204,113,.2)'],[.6,'rgba(230,126,34,.2)']].forEach(([g,c])=>{
+    const y=H-(g/_G_MAX)*H*.9;
+    _ghX.beginPath();_ghX.setLineDash([2,3]);_ghX.moveTo(0,y);_ghX.lineTo(W,y);
+    _ghX.strokeStyle=c;_ghX.lineWidth=dpr;_ghX.stroke();_ghX.setLineDash([]);
+  });
+  // 색상 그래디언트 라인
+  for(let i=1;i<n;i++){
+    const v=_ghData[i],pv=_ghData[i-1];
+    const x1=(i-1)*dx,y1=H-(pv/_G_MAX)*H*.9,x2=i*dx,y2=H-(v/_G_MAX)*H*.9;
+    const col=v<.3?'rgba(46,204,113,.8)':v<.6?'rgba(230,126,34,.8)':'rgba(231,76,60,.9)';
+    _ghX.beginPath();_ghX.moveTo(x1,y1);_ghX.lineTo(x2,y2);
+    _ghX.strokeStyle=col;_ghX.lineWidth=1.5*dpr;_ghX.lineJoin='round';_ghX.stroke();
+  }
+  // 현재값 닷
+  const lv=_ghData[n-1],lx=(n-1)*dx,ly=H-(lv/_G_MAX)*H*.9;
+  const dc=lv<.3?'rgba(46,204,113,1)':lv<.6?'rgba(230,126,34,1)':'rgba(231,76,60,1)';
+  _ghX.beginPath();_ghX.arc(lx,ly,2.5*dpr,0,Math.PI*2);_ghX.fillStyle=dc;_ghX.fill();
+}
+
+/* ─── ⑨ 회생제동 이펙트 ─────────────────────────────────── */
+let _regenActive=false;
+function _regenUpdate(kw){
+  const regen=kw<-2;
+  if(regen===_regenActive)return;
+  _regenActive=regen;
+}
+
+/* ─── ⑩ kW 방향 화살표 ──────────────────────────────────── */
+function _kwArrowUpdate(kw){
+  const arr=$('js-kw-arrow');if(!arr)return;
+  if(kw<-2){arr.textContent='▲';arr.className='kw-dir-arrow regen';}
+  else if(kw>5){arr.textContent='▼';arr.className='kw-dir-arrow cons';}
+  else{arr.textContent='';arr.className='kw-dir-arrow';}
+}
+
+/* ─── ⑪ 방문 마커 ───────────────────────────────────────── */
+let _stopTs=null,_stopLat=null,_stopLon=null,_visitMarkers=[];
+const _VISIT_KEY='td_visits_v1';
+function _loadVisits(){try{return JSON.parse(localStorage.getItem(_VISIT_KEY)||'[]');}catch{return[];}}
+function _saveVisit(la,lo){
+  const vs=_loadVisits();
+  const ex=vs.find(v=>haversine(v.la,v.lo,la,lo)<40);
+  if(ex){ex.n++;ex.la=(ex.la+la)/2;ex.lo=(ex.lo+lo)/2;}
+  else vs.push({la,lo,n:1});
+  localStorage.setItem(_VISIT_KEY,JSON.stringify(vs.slice(-60)));
+  _renderVisitMarkers();
+}
+function _renderVisitMarkers(){
+  _visitMarkers.forEach(m=>_map.removeLayer(m));_visitMarkers=[];
+  _loadVisits().filter(v=>v.n>=3).forEach(v=>{
+    const el=document.createElement('div');el.className='visit-dot';
+    const m=L.marker([v.la,v.lo],{icon:L.divIcon({html:el,className:'',iconSize:[8,8],iconAnchor:[4,4]}),zIndexOffset:500,interactive:true}).addTo(_map);
+    m.bindTooltip(`${v.n}회 방문`,{permanent:false,direction:'top',offset:[0,-8],className:'visit-tip'});
+    _visitMarkers.push(m);
+  });
+}
+function _visitCheck(la,lo,kmh){
+  if(kmh>5){_stopTs=null;return;}
+  const now=Date.now();
+  if(!_stopTs||haversine(_stopLat,_stopLon,la,lo)>30){_stopTs=now;_stopLat=la;_stopLon=lo;return;}
+  if(now-_stopTs>20000){_saveVisit(la,lo);_stopTs=null;}
+}
+setTimeout(_renderVisitMarkers,1200);
 
 /* ── DEMO MODE ── */
 let _demoTimer=null,_demoT=0;
